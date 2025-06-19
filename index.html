@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Highlight Manager - Installation Page</title>
+    <script src="https://cdn.jsdelivr.net/npm/terser@5.27.0/dist/bundle.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3182CE;
+            --primary-hover: #2C5282;
+            --secondary-color: #4FD1C5;
+            --text-color: #2D3748;
+            --light-gray: #E2E8F0;
+            --success-color: #38A169;
+            --error-color: #E53E3E;
+            --warning-color: #DD6B20;
+            --info-color: #3182CE;
+            --bg-color: #F7FAFC;
+            --card-bg: #FFFFFF;
+            --transition-speed: 0.3s;
+            --border-radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        body.protected {
+            overflow: auto;
+        }
+
+        body.protected>*:not(.auth-overlay, .modal-overlay, .toast-container) {
+            display: none;
+        }
+
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .auth-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .auth-card img {
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .auth-card h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .auth-card p {
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--light-gray);
+            animation: fadeIn 0.5s ease;
+        }
+
+        h1,
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            padding: 30px;
+            margin-bottom: 30px;
+            animation: slideUp 0.5s ease;
+            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        }
+
+        .container:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .bookmarklet-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            padding: 14px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            transition: all var(--transition-speed) ease;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bookmarklet-link:before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            width: 24px;
+            height: 24px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z'/%3E%3C/svg%3E");
+            transform: translateY(-50%);
+            opacity: 0.9;
+        }
+
+        .bookmarklet-link:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .bookmarklet-link:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .bookmarklet-link.draggable {
+            cursor: grab;
+            animation: pulse 2s infinite;
+        }
+
+        .bookmarklet-link.draggable:after {
+            content: "Arraste-me!";
+            position: absolute;
+            top: -25px;
+            right: 10px;
+            background: var(--text-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0.8;
+            animation: bounce 2s infinite;
+        }
+
+        .instructions {
+            background-color: rgba(49, 130, 206, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .instructions h3:before {
+            content: "";
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233182CE'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E");
+            background-size: contain;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+            counter-reset: item;
+        }
+
+        .instructions li {
+            margin-bottom: 12px;
+            position: relative;
+            padding-left: 35px;
+            counter-increment: item;
+        }
+
+        .instructions li:before {
+            content: counter(item);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-color: var(--primary-color);
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .status:before {
+            content: "";
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            background-size: contain;
+        }
+
+        .loading {
+            background-color: rgba(221, 107, 32, 0.1);
+            color: var(--warning-color);
+        }
+
+        .loading:before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23DD6B20'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E");
+            animation: spin 2s linear infinite;
+        }
+
+        .error {
+            background-color: rgba(229, 62, 62, 0.1);
+            color: var(--error-color);
+        }
+
+        .error:before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23E53E3E'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E");
+        }
+
+        .success {
+            background-color: rgba(56, 161, 105, 0.1);
+            color: var(--success-color);
+        }
+
+        .success:before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2338A169'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+        }
+
+        .debug-panel {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: transparent;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--light-gray);
+            transition: all var(--transition-speed) ease;
+        }
+
+        .debug-toggle {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 0.9em;
+            font-family: inherit;
+            transition: color var(--transition-speed) ease;
+        }
+
+        .debug-toggle:hover {
+            color: var(--primary-hover);
+        }
+
+        pre {
+            background: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            border: 1px solid var(--light-gray);
+            margin-top: 15px;
+            color: #1A202C;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background-color: white;
+        }
+
+        .copy-btn.copied {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .debug-section {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: rgba(79, 209, 197, 0.1);
+            border-radius: var(--border-radius);
+        }
+
+        .debug-section h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .debug-url {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+
+        .debug-url span {
+            flex-grow: 1;
+        }
+
+        .debug-url-btn {
+            margin-left: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .debug-url-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .debug-url-btn.copied {
+            background-color: var(--success-color);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            box-sizing: border-box;
+            font-family: inherit;
+            transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.3);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: var(--border-radius);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            animation: slideInRight 0.3s ease, fadeOut 0.5s ease 2.5s forwards;
+            max-width: 300px;
+        }
+
+        .toast:before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            background-size: contain;
+        }
+
+        .toast.success {
+            background-color: rgba(56, 161, 105, 0.1);
+            color: var(--success-color);
+        }
+
+        .toast.success:before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2338A169'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+        }
+
+        .toast.error {
+            background-color: rgba(229, 62, 62, 0.1);
+            color: var(--error-color);
+        }
+
+        .toast.error:before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23E53E3E'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E");
+        }
+
+        /* Custom Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform var(--transition-speed) ease, opacity var(--transition-speed) ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-header h3 {
+            color: var(--primary-color);
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .modal-btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            margin-left: 10px;
+        }
+
+        .modal-btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .modal-btn-secondary {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--light-gray);
+        }
+
+        .modal-btn-secondary:hover {
+            background-color: var(--light-gray);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.3);
+        }
+
+        /* Access Denied Page */
+        .access-denied {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .access-denied h2 {
+            color: var(--error-color);
+            margin-bottom: 20px;
+        }
+
+        .access-denied p {
+            margin-bottom: 20px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(49, 130, 206, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(49, 130, 206, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(49, 130, 206, 0);
+            }
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.3rem;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .instructions li {
+                padding-left: 30px;
+            }
+
+            .bookmarklet-link:before {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.1rem;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .instructions {
+                padding: 15px;
+            }
+
+            .bookmarklet-link {
+                padding: 12px 15px;
+            }
+
+            .status {
+                padding: 12px;
+            }
+
+            .bookmarklet-link.draggable:after {
+                display: none;
+            }
+        }
+
+        /* Acessibilidade - Foco */
+        a:focus,
+        button:focus,
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.5);
+        }
+
+        /* Modo escuro (opcional) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1A202C;
+                --card-bg: #2D3748;
+                --text-color: #E2E8F0;
+                --light-gray: #4A5568;
+            }
+
+            /* pre {
+                background: #4A5568;
+                color: #E2E8F0;
+            } */
+
+            .instructions {
+                background-color: rgba(49, 130, 206, 0.2);
+            }
+
+            .loading {
+                background-color: rgba(221, 107, 32, 0.2);
+            }
+
+            .error {
+                background-color: rgba(229, 62, 62, 0.2);
+            }
+
+            .success {
+                background-color: rgba(56, 161, 105, 0.2);
+            }
+        }
+    </style>
+</head>
+
+<body class="protected">
+
+    <div class="auth-overlay">
+        <div class="auth-card">
+            <img src="./img_highlightManager.png" alt="Imagem Highlight Manager" width="200px"> <!-- reference to badge -->
+            <h2>Highlight Manager</h2>
+               <p>Acesso Protegido</p>
+            <p>Por favor, insira a senha de instalação para continuar. A senha fornecida tem validade restrita ao dia do
+                recebimento. Caso expire, faça novo contato com o autor pelo link abaixo:<br><br> <a
+                    class="modal-btn modal-btn-primary" href="https://linktr.ee/magasine" target="_blank">@magasine</a> <!-- reference to badge -->
+            </p>
+            <!-- Botão para abrir o modal diretamente da tela de proteção -->
+            <button id="openModalBtn" class="modal-btn modal-btn-primary" style="width: 100%; margin-top: 10px;">
+                Inserir Senha
+            </button>
+        </div>
+    </div>
+
+    <div class="toast-container"></div>
+
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Insira a Senha</h3>
+            </div>
+            <div class="modal-body">
+                <p>Por favor, insira a senha de instalação. Caso ainda não tenha recebido peça via whatsapp.</p>
+                <input type="password" id="passwordInput" class="modal-input" placeholder="Senha">
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" id="cancelBtn">Cancelar</button>
+                <button class="modal-btn modal-btn-primary" id="submitBtn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="accessDeniedPage" class="hidden">
+        <div class="container access-denied">
+            <h2>Acesso negado</h2>
+            <p>Você não forneceu a senha correta. Deseja tentar novamente?</p>
+            <button class="modal-btn modal-btn-primary" id="tryAgainBtn">Tentar Novamente</button>
+            <p style="margin-top: 20px;">Ou contate o autor em:</p>
+            <a class="modal-btn modal-btn-secondary" href="https://linktr.ee/magasine" target="_blank">@magasine</a>
+        </div>
+    </div>
+
+    <header>
+        <h1>Highlight Manager - Installation Page</h1> <!-- reference to badge -->
+        <h2>Automatic Bookmark Generator</h2>
+    </header>
+
+    <div class="container">
+        <div class="instructions">
+            <p><sup>(Language: pt-BR)</sup></p>
+            <h3>Como usar este gerador de bookmarklets:</h3>
+            <ol>
+                <li>O bookmarklet é gerado automaticamente ao carregar a página</li>
+                <li>Arraste o botão azul abaixo para sua barra de favoritos</li>
+                <li>Quando quiser executar o script, basta clicar no favorito salvo</li>
+            </ol>
+        </div>
+
+        <div id="statusMessage" class="status loading">
+            Carregando bookmarklet automático...
+        </div>
+
+        <a href="#" id="bookmarkletLink" draggable="true" class="bookmarklet-link hidden">
+            Bookmarklet Carregando...
+        </a>
+
+        <div class="debug-panel hidden" id="debugPanel">
+            <button class="debug-toggle" onclick="toggleDebug()">Ocultar detalhes técnicos</button>
+
+            <div class="debug-section">
+                <h4>URL de Acesso para Hoje</h4>
+                <div class="debug-url">
+                    <pre id="todayAccessUrl"></pre><br>
+                    <button class="debug-url-btn" onclick="copyAccessUrl()">Copy</button>
+                </div>
+                <p>Esta URL contém a senha válida para hoje e pode ser compartilhada.</p>
+            </div>
+
+            <div class="debug-section">
+                <h4>Código do Bookmarklet</h4>
+                <pre id="output">Detalhes técnicos aparecerão aqui...
+                    <button class="copy-btn" onclick="copyCode()">Copiar</button>
+                </pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PASSWORD = "hlm"; // reference to badge
+        let authorized = false;
+        let debugMode = window.location.hash === "#debug"; 
+
+        // Função para verificar e redirecionar para a URL de acesso
+        function checkForTauRedirect() {
+            if (window.location.hash === "#vafgnyyngvba") {
+                const todayAccessUrl = generateTodayAccessUrl();
+                window.location.href = todayAccessUrl;
+                return true;
+            }
+            return false;
+        }
+
+        // Função para cifrar
+        function rot13(str) {
+            return str.replace(/[a-zA-Z]/g, function (c) {
+                var base = c <= 'Z' ? 65 : 97;
+                return String.fromCharCode((c.charCodeAt(0) - base + 13) % 26 + base);
+            });
+        }
+
+        // Obter dia da semana sem sufixos
+        function getDiaDaSemana() {
+            const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            return dias[new Date().getDay()];
+        }
+
+        // Gerar URL de acesso para o dia atual
+        function generateTodayAccessUrl() {
+            const senhaDia = rot13(getDiaDaSemana());
+            const currentUrl = window.location.href.split('#')[0];
+            return `${currentUrl}#${senhaDia}`;
+        }
+
+        // Atualizar a URL de acesso no painel de debug
+        function updateAccessUrl() {
+            const urlElement = document.getElementById('todayAccessUrl');
+            urlElement.textContent = generateTodayAccessUrl();
+        }
+
+        // Copiar URL de acesso
+        function copyAccessUrl() {
+            const url = generateTodayAccessUrl();
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = document.querySelector('.debug-url-btn');
+                btn.textContent = 'Copiado!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copiar';
+                    btn.classList.remove('copied');
+                }, 2000);
+                showToast('URL copiada para a área de transferência!', 'success');
+            });
+        }
+
+        // Copiar código
+        function copyCode() {
+            const code = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'Copiado!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copiar';
+                    btn.classList.remove('copied');
+                }, 2000);
+                showToast('Código copiado para a área de transferência!', 'success');
+            });
+        }
+
+        // Verificar senha
+        function verificarSenha(input) {
+            if (!input) return false;
+            input = input.toLowerCase();
+            const senhaDia = rot13(getDiaDaSemana());
+            return input === senhaDia || input === PASSWORD;
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'success') {
+            const toastContainer = document.querySelector('.toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Modal personalizado
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const tryAgainBtn = document.getElementById('tryAgainBtn');
+
+        function showPasswordModal() {
+            passwordModal.classList.add('active');
+            setTimeout(() => {
+                passwordInput.focus();
+            }, 300);
+        }
+
+        function hidePasswordModal() {
+            passwordModal.classList.remove('active');
+        }
+
+        function showAccessDenied() {
+            document.getElementById('accessDeniedPage').classList.remove('hidden');
+            document.querySelector('.auth-overlay').style.display = 'none';
+        }
+
+        function hideAccessDenied() {
+            document.getElementById('accessDeniedPage').classList.add('hidden');
+            document.querySelector('.auth-overlay').style.display = 'flex';
+        }
+
+        // Adicionar evento de clique ao botão da tela de proteção
+        openModalBtn.addEventListener('click', () => {
+            showPasswordModal();
+        });
+
+        submitBtn.addEventListener('click', () => {
+            const input = passwordInput.value;
+            if (verificarSenha(input)) {
+                hidePasswordModal();
+                concederAcesso();
+                showToast('Acesso concedido com sucesso!', 'success');
+            } else {
+                showToast('Senha incorreta. Tente novamente.', 'error');
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            hidePasswordModal();
+            showAccessDenied();
+        });
+
+        tryAgainBtn.addEventListener('click', () => {
+            hideAccessDenied();
+            showPasswordModal();
+        });
+
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitBtn.click();
+            }
+        });
+
+        // Conceder acesso
+        function concederAcesso() {
+            document.body.classList.remove("protected");
+            document.querySelector(".auth-overlay").style.display = "none";
+            document.getElementById("accessDeniedPage").classList.add("hidden");
+            authorized = true;
+            gerarBookmarkletAutomatico();
+
+            if (debugMode) {
+                document.getElementById("debugPanel").classList.remove("hidden");
+                updateAccessUrl();
+            }
+        }
+
+        // Verificação ao carregar a página
+        window.addEventListener("DOMContentLoaded", () => {
+            // Verificar primeiro se a hash é "installation" e redirecionar se necessário
+            if (checkForTauRedirect()) {
+                return; // Interrompe a execução se o redirecionamento ocorreu
+            }
+
+            if (!document.body.classList.contains("protected")) return;
+
+            // Verificar senha na URL
+            const hash = window.location.hash.substring(1);
+            if (verificarSenha(hash)) {
+                debugMode = window.location.hash === "#debug" || hash === "debug";
+                concederAcesso();
+                return;
+            }
+        });
+
+        // Código original do bookmarklet
+        let appInfo = {
+            name: "Highlight Manager", // reference to badge
+            version: "v" + new Date().toISOString().slice(0, 10).replace(/-/g, ""), // reference to badge
+            credits: "by @magasine" // reference to badge
+        };
+
+        async function fetchLatestGistRawUrl(gistUrl) {
+            const matches = gistUrl.match(/gist\.github\.com\/([^\/]+)\/([a-f0-9]+)/i);
+            if (!matches) throw new Error("URL do Gist inválida");
+            const [_, username, gistId] = matches;
+
+            const apiUrl = `https://api.github.com/gists/${gistId}`;
+            const res = await fetch(apiUrl);
+            if (!res.ok) throw new Error(`Erro ao buscar o Gist: ${res.status}`);
+
+            const data = await res.json();
+            const files = data.files;
+            const firstFile = Object.values(files)[0];
+            return firstFile.raw_url;
+        }
+
+        function showStatus(message, type) {
+            const statusEl = document.getElementById("statusMessage");
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function updateBookmarkletName() {
+            const link = document.getElementById("bookmarkletLink");
+            link.textContent = `!  ${appInfo.name} - ${appInfo.credits} #updated (${appInfo.version})`;
+            link.classList.add('draggable');
+        }
+
+        function extractBadgeInfo(code) {
+            try {
+                const configMatch = code.match(/const\s+CONFIG\s*=\s*({[\s\S]*?});/);
+                if (configMatch) {
+                    const configStr = configMatch[1];
+                    const configObj = new Function(`return ${configStr};`)();
+
+                    if (configObj.APP_INFO) {
+                        appInfo = {
+                            name: configObj.APP_INFO.name || "Highlight Manager", // reference to badge
+                            version: configObj.APP_INFO.version || "v" + new Date().toISOString().slice(0, 10).replace(/-/g, ""), // reference to badge
+                            credits: configObj.APP_INFO.credits || "by @magasine" // reference to badge
+                        };
+                        console.log("Badge info extraída com sucesso:", appInfo);
+                    }
+                }
+            } catch (e) {
+                console.error("Falha na extração do badge:", e);
+                showToast("Falha na extração de informações do script", "error");
+            }
+        }
+
+        function toggleDebug() {
+            const panel = document.getElementById("debugPanel");
+            const toggle = panel.querySelector(".debug-toggle");
+            panel.classList.toggle("hidden");
+            toggle.textContent = panel.classList.contains("hidden") ?
+                "Mostrar detalhes técnicos" : "Ocultar detalhes técnicos";
+        }
+
+        async function gerarBookmarkletAutomatico() {
+            const output = document.getElementById("output");
+            const link = document.getElementById("bookmarkletLink");
+
+            showStatus("Processando Gist...", "loading");
+            try {
+                const gistUrl = "https://gist.github.com/magasine/9f98b357e8e1e2bb2f3d8db96f1c9622"; // reference to badge
+                const rawUrl = await fetchLatestGistRawUrl(gistUrl);
+                showStatus("Carregando script do bookmarklet...", "loading");
+                showToast("Conectando ao repositório...", "success");
+
+                const res = await fetch(rawUrl);
+                if (!res.ok) throw new Error(`Erro ao baixar script: ${res.status}`);
+
+                const code = await res.text();
+                extractBadgeInfo(code);
+
+                showStatus("Minificando código...", "loading");
+                const minified = await Terser.minify(code);
+
+                if (minified.error) throw minified.error;
+
+                updateBookmarkletName();
+                link.href = `javascript:${minified.code}`;
+                link.classList.remove("hidden");
+                showStatus("Bookmarklet pronto! Arraste o botão para sua barra de favoritos.", "success");
+                showToast("Bookmarklet gerado com sucesso!", "success");
+                output.textContent = minified.code;
+            } catch (e) {
+                showStatus("Erro: " + e.message, "error");
+                showToast("Erro ao gerar bookmarklet: " + e.message, "error");
+                console.error(e);
+            }
+        }
+
+        // Verificar redirecionamento installation imediatamente
+        checkForTauRedirect();
+    </script>
+
+</body>
+
+</html>
