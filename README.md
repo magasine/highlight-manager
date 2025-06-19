@@ -1,4 +1,4 @@
-# 🚀 Highlight Manager
+# 🚀 Highlight Manager - by @magasine
 
 O **Highlight Manager** é uma ferramenta poderosa e intuitiva para gerenciar e organizar seus destaques de texto diretamente em qualquer página da web. Diga adeus às anotações perdidas e melhore sua experiência de leitura e pesquisa com um sistema de destaque robusto e personalizável.
 
