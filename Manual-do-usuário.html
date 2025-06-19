@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual do Usuário: Highlight Manager</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: #ffffff;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+
+        nav {
+            background-color: #34495e;
+            padding: 10px 0;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        nav ul li {
+            margin: 0 15px;
+        }
+
+        nav ul li a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        nav ul li a:hover,
+        nav ul li a.active {
+            background-color: #5d6d7e;
+            color: #e0e0e0;
+        }
+
+        .highlight-image-display {
+            display: block;
+            /* Essencial para que margin: auto funcione */
+            margin: 30px auto;
+            /* Centraliza a imagem horizontalmente e adiciona margem vertical */
+            max-width: 80%;
+            /* Garante que a imagem seja responsiva e não estoure o contêiner */
+            width: 600px;
+            /* Define uma largura máxima para a imagem em telas maiores, ajuste conforme preferir */
+            height: auto;
+            /* Mantém a proporção da imagem */
+            border-radius: 10px;
+            /* Bordas arredondadas para um visual suave */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            /* Uma sombra mais proeminente para destaque */
+            transition: transform 0.3s ease-in-out;
+            /* Adiciona uma transição suave para efeitos de hover */
+        }
+
+        .highlight-image-display:hover {
+            transform: scale(1.02);
+            /* Leve zoom ao passar o mouse para dar um toque interativo */
+        }
+
+        /* Opcional: Ajuste o tamanho da imagem para telas menores */
+        @media (max-width: 768px) {
+            .highlight-image-display {
+                width: 90%;
+                /* Aumenta a largura em telas menores para melhor visualização */
+            }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        section:last-child {
+            border-bottom: none;
+        }
+
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 1.8em;
+        }
+
+        h3 {
+            color: #34495e;
+            font-size: 1.3em;
+            margin-top: 20px;
+        }
+
+        p {
+            margin-bottom: 10px;
+        }
+
+        ul {
+            list-style-type: disc;
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        ol {
+            list-style-type: decimal;
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .code-snippet {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-left: 5px solid #3498db;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            border-radius: 5px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        .key-combo {
+            background-color: #e0e0e0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+        }
+
+        .tip {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            color: #2e7d32;
+        }
+
+        .warning {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            color: #c62828;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            background-color: #2c3e50;
+            color: #ffffff;
+            font-size: 0.9em;
+            border-top: 1px solid #34495e;
+        }
+
+        footer a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Manual do Usuário: Highlight Manager</h1>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#introducao">Introdução</a></li>
+            <li><a href="#instalacao">Instalação</a></li>
+            <li><a href="#uso-basico">Uso Básico</a></li>
+            <li><a href="#gerenciando-destaques">Gerenciando
+                    Destaques</a></li>
+            <li><a href="#configuracoes-e-personalizacao">Configurações e
+                    Personalização</a></li>
+            <li><a href="#solucao-de-problemas">Solução de
+                    Problemas</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <img src="./img_highlightManager.png" alt="Imagem de uma página web com destaque em highlight"
+            class="highlight-image-display">
+
+        <section id="introducao">
+            <h2>1. Introdução</h2>
+            <p>O <strong>Highlight Manager</strong> é uma ferramenta
+                intuitiva projetada para ajudá-lo a destacar e gerenciar
+                informações importantes diretamente em qualquer página da
+                web. Com ele, você pode facilmente marcar trechos de texto,
+                salvar esses destaques para referência futura e organizá-los
+                para uma experiência de leitura e pesquisa mais eficiente.
+                Diga adeus às anotações perdidas e dê as boas-vindas a um
+                sistema de destaque robusto e personalizável!</p>
+            <p>Este guia irá cobrir desde a instalação até o uso avançado,
+                garantindo que você aproveite ao máximo todas as
+                funcionalidades do Highlight Manager.</p>
+        </section>
+
+        <section id="instalacao">
+            <h2>2. Instalação (Como um Bookmarklet/Script de Navegador)</h2>
+            <p>O Highlight Manager é distribuído como um
+                <em>bookmarklet</em> ou um script que pode ser injetado no
+                seu navegador. Para utilizá-lo, você precisará adicionar o
+                código JavaScript fornecido à sua barra de favoritos ou
+                executá-lo via console do desenvolvedor.
+            </p>
+
+            <h3>2.1. Criando um Bookmarklet</h3>
+            <p>Esta é a maneira mais prática de usar o Highlight
+                Manager.</p>
+            <ol>
+                <li><strong>Copie o Código:</strong> Copie todo o código
+                    JavaScript do Highlight Manager, que começa com <span class="code-snippet">javascript: (() => { ...
+                        })();</span></li>
+                <li><strong>Abra seus Favoritos/Marcadores:</strong> No seu
+                    navegador (Chrome, Firefox, Edge, etc.), abra o
+                    gerenciador de favoritos ou a barra de favoritos.</li>
+                <li><strong>Crie um Novo Favorito:</strong>
+                    <ul>
+                        <li>Clique com o botão direito na sua barra de
+                            favoritos e selecione "Adicionar página..." ou
+                            "Adicionar marcador".</li>
+                        <li>No campo "Nome", digite algo como
+                            "Highlight Manager" ou "Meus Destaques".</li>
+                        <li>No campo "URL" (ou "Endereço"), cole o código
+                            JavaScript que você copiou no Passo 1.</li>
+                        <li>Clique em "Salvar" ou "Concluir".</li>
+                    </ul>
+                </li>
+                <li><strong>Use o Bookmarklet:</strong> Sempre que você
+                    quiser usar o Highlight Manager em uma página, basta
+                    clicar no bookmarklet que você acabou de criar na sua
+                    barra de favoritos.</li>
+            </ol>
+            <div class="tip">
+                <strong>Dica:</strong> Certifique-se de que o campo "URL"
+                comece com <span class="code-snippet">javascript:</span>.
+                Alguns navegadores podem tentar remover isso.
+            </div>
+
+            <h3>2.2. Executando via Console do Desenvolvedor
+                (Temporário)</h3>
+            <p>Esta opção é útil para testar ou para uso ocasional, mas o
+                Highlight Manager será removido ao recarregar a página.</p>
+            <ol>
+                <li><strong>Abra o Console do Desenvolvedor:</strong>
+                    Pressione <span class="key-combo">F12</span> ou <span class="key-combo">Ctrl+Shift+I</span>
+                    (Windows/Linux) / <span class="key-combo">Cmd+Option+I</span> (Mac) para
+                    abrir as ferramentas de desenvolvedor do seu
+                    navegador.</li>
+                <li><strong>Vá para a Aba "Console":</strong> Clique na aba
+                    "Console".</li>
+                <li><strong>Cole e Execute o Código:</strong> Cole todo o
+                    código JavaScript do Highlight Manager no console e
+                    pressione <span class="key-combo">Enter</span>.</li>
+            </ol>
+        </section>
+
+        <section id="uso-basico">
+            <h2>3. Uso Básico</h2>
+
+            <h3>3.1. Destacando Texto</h3>
+            <p>Para destacar um trecho de texto em qualquer página:</p>
+            <ol>
+                <li>Mantenha a tecla <span class="key-combo">Ctrl</span>
+                    (Windows/Linux) ou <span class="key-combo">Cmd</span>
+                    (Mac) pressionada.</li>
+                <li>Com a tecla pressionada, selecione o texto desejado com
+                    o mouse.</li>
+                <li>Ao soltar o botão do mouse (e a tecla <span class="key-combo">Ctrl/Cmd</span>), o texto
+                    selecionado será automaticamente destacado com a cor
+                    padrão.</li>
+            </ol>
+            <div class="warning">
+                <strong>Atenção:</strong> A seleção de texto deve ser
+                contígua. Se a seleção for muito longa (mais de 10.000
+                caracteres), um aviso será exibido.
+            </div>
+
+            <h3>3.2. Acessando o Painel de Destaques</h3>
+            <p>Ao ativar o Highlight Manager, um pequeno painel (geralmente
+                no canto superior direito da tela) aparecerá. Este painel é
+                o coração da ferramenta, onde você pode visualizar e
+                gerenciar todos os seus destaques.</p>
+            <img src="placeholder_popup.png" alt="Exemplo do Painel de Destaques"
+                style="max-width:100%; height:auto; display:block; margin: 15px auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <p><em>(Imagine uma imagem do popup do Highlight Manager aqui,
+                    com a lista de destaques, botões de busca, ocultar,
+                    limpar, etc.)</em></p>
+        </section>
+
+        <section id="gerenciando-destaques">
+            <h2>4. Gerenciando Destaques</h2>
+
+            <h3>4.1. Lista de Destaques</h3>
+            <p>Dentro do painel, você verá uma lista de todos os destaques
+                criados. Cada item na lista representa um destaque
+                individual e exibe uma prévia do texto destacado.</p>
+            <ul>
+                <li><strong>Nome do Destaque:</strong> Geralmente, uma parte
+                    do texto destacado. Se for muito longo, será
+                    truncado.</li>
+                <li><strong>Remover Destaque (<span class="key-combo">✕</span>):</strong> Clique
+                    neste botão ao lado de um destaque para removê-lo da
+                    lista e da página.</li>
+                <li><strong>Caixa de Seleção (Checkbox):</strong> Permite
+                    alternar a visibilidade de um destaque específico na
+                    página.</li>
+                <li><strong>Link do Destaque:</strong> Clique no texto do
+                    destaque para rolar a página até a localização original
+                    do destaque. O destaque piscará brevemente para
+                    facilitar a identificação.</li>
+            </ul>
+
+            <h3>4.2. Busca de Destaques</h3>
+            <p>Use a caixa de pesquisa no painel para filtrar seus
+                destaques. Digite qualquer termo na caixa de entrada e a
+                lista será atualizada em tempo real para mostrar apenas os
+                destaques que contêm o termo de busca.</p>
+            <ul>
+                <li><strong>Campo de Busca:</strong> <span class="code-snippet">Search
+                        highlights...</span></li>
+                <li><strong>Botão Limpar Busca (<span class="key-combo">×</span>):</strong> Clique
+                    neste botão para limpar o campo de busca e exibir todos
+                    os destaques novamente.</li>
+            </ul>
+
+            <h3>4.3. Ordenação de Destaques</h3>
+            <p>O botão de ordenação permite organizar seus destaques em
+                ordem alfabética.</p>
+            <ul>
+                <li><strong>Botão Ordenar (<span class="key-combo">A-Z
+                            ⇅</span>):</strong> Clique para alternar entre
+                    ordenação ascendente (A-Z ↑) e descendente (Z-A ↓) com
+                    base no texto do destaque.</li>
+            </ul>
+
+            <h3>4.4. Ocultar/Exibir Todos os Destaques</h3>
+            <p>Você pode ocultar ou exibir todos os destaques na página de
+                uma vez.</p>
+            <ul>
+                <li><strong>Botão Ocultar/Exibir:</strong> <span class="code-snippet">Hide</span> (Ocultar) / <span
+                        class="code-snippet">Show</span> (Exibir). Clique
+                    para alternar a visibilidade global de todos os
+                    destaques. Isso não remove os destaques, apenas os torna
+                    transparentes.</li>
+            </ul>
+
+            <h3>4.5. Limpar Todos os Destaques</h3>
+            <p>Para remover todos os destaques de uma vez:</p>
+            <ul>
+                <li><strong>Botão Limpar:</strong> <span class="code-snippet">Clear</span>. Ao clicar, uma
+                    confirmação será solicitada. Se você confirmar, todos os
+                    destaques serão removidos permanentemente da página e do
+                    armazenamento local.</li>
+            </ul>
+        </section>
+
+        <section id="configuracoes-e-personalizacao">
+            <h2>5. Configurações e Personalização</h2>
+
+            <h3>5.1. Posição do Painel</h3>
+            <p>O painel do Highlight Manager pode ser arrastado e solto para
+                qualquer lugar na tela. Basta clicar e segurar na barra de
+                título do painel ("Highlights") e arrastar para a posição
+                desejada. A posição será salva automaticamente para futuras
+                sessões.</p>
+
+            <h3>5.2. Minimizar/Maximizar Painel</h3>
+            <p>Você pode minimizar o painel para ocupar menos espaço na
+                tela.</p>
+            <ul>
+                <li><strong>Botão Minimizar/Maximizar (<span class="key-combo">_</span>):</strong> Clique
+                    para ocultar ou exibir o conteúdo da lista de destaques,
+                    mantendo apenas o cabeçalho visível.</li>
+            </ul>
+
+            <h3>5.3. Temas (Claro/Escuro)</h3>
+            <p>O Highlight Manager se adapta ao tema do seu sistema
+                operacional por padrão. No entanto, você pode alternar
+                manualmente o tema dentro do painel.</p>
+            <ul>
+                <li><strong>Detecção Automática:</strong> O aplicativo
+                    tentará usar o tema claro ou escuro com base nas suas
+                    preferências de sistema (<span class="code-snippet">prefers-color-scheme</span>).</li>
+                <li><strong>Alternar Tema Manualmente:</strong> O botão
+                    <span class="code-snippet">☀️ Light</span> / <span class="code-snippet">🌙 Dark</span> no cabeçalho
+                    do
+                    painel permite alternar o tema manualmente. Esta
+                    preferência será salva.
+                </li>
+            </ul>
+
+            <h3>5.4. Feedback do Usuário</h3>
+            <p>Pequenas mensagens de feedback aparecerão brevemente na parte
+                superior da tela para informar sobre ações como
+                "Texto destacado!", "Limite de armazenamento excedido", ou
+                "Gerenciador de destaques fechado".</p>
+        </section>
+
+        <section id="solucao-de-problemas">
+            <h2>6. Solução de Problemas Comuns</h2>
+
+            <h3>6.1. Destaques Não Aparecem Após Recarregar a Página</h3>
+            <ul>
+                <li><strong>Verifique o Bookmarklet/Script:</strong>
+                    Certifique-se de que você está ativando o Highlight
+                    Manager (clicando no bookmarklet ou executando o script
+                    no console) <em>após</em> a página ser totalmente
+                    carregada.</li>
+                <li><strong>Problemas de Armazenamento Local:</strong> O
+                    Highlight Manager armazena seus destaques no
+                    "Local Storage" do seu navegador. Se você limpar o cache
+                    ou os dados do site, os destaques podem ser perdidos.
+                    Verifique as configurações de privacidade do seu
+                    navegador.</li>
+                <li><strong>Conflitos de Script:</strong> Em raras ocasiões,
+                    outros scripts na página podem interferir. Tente
+                    desativar outras extensões ou scripts para ver se o
+                    problema persiste.</li>
+                <li><strong>Conteúdo Dinâmico:</strong> Páginas que carregam
+                    conteúdo dinamicamente (SPA - Single Page Applications)
+                    podem ocasionalmente fazer com que os destaques
+                    desapareçam temporariamente. O Highlight Manager tenta
+                    restaurá-los, mas pode haver um pequeno atraso.</li>
+            </ul>
+
+            <h3>6.2. Destaques Não Podem Ser Criados</h3>
+            <ul>
+                <li><strong>Seleção Inválida:</strong> Certifique-se de que
+                    está selecionando texto contíguo. Selecionar elementos
+                    não-texto (imagens, vídeos) ou texto em áreas protegidas
+                    pode causar problemas.</li>
+                <li><strong>Seleção Muito Longa:</strong> Há um limite de
+                    10.000 caracteres para uma única seleção. Se sua seleção
+                    for maior, um aviso será exibido.</li>
+                <li><strong>Permissões do Navegador:</strong> Embora seja um
+                    bookmarklet, em alguns ambientes restritivos,
+                    certifique-se de que scripts JavaScript são
+                    permitidos.</li>
+            </ul>
+
+            <h3>6.3. O Painel Desapareceu ou Não Abre</h3>
+            <ul>
+                <li><strong>Ativação:</strong> Lembre-se de que o painel só
+                    aparece após você ativar o Highlight Manager (clicar no
+                    bookmarklet).</li>
+                <li><strong>Fechamento Acidental:</strong> Verifique se você
+                    não clicou no botão "X" (Fechar) no cabeçalho do painel.
+                    Se sim, basta ativar o bookmarklet novamente.</li>
+                <li><strong>Minimização:</strong> O painel pode estar
+                    minimizado. Verifique se apenas o cabeçalho está visível
+                    e clique no botão "_" para expandir.</li>
+            </ul>
+
+            <h3>6.4. Limite de Armazenamento Excedido</h3>
+            <p>Se você criar um grande número de destaques, o navegador pode
+                atingir seu limite de armazenamento local. O Highlight
+                Manager tentará lidar com isso removendo os destaques mais
+                antigos para liberar espaço. Considere exportar ou limpar
+                destaques que não são mais necessários.</p>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>Desenvolvido com 💛 por <a href="https://linktr.ee/magasine" target="_blank">@magasine</a></p>
+    </footer>
+
+</body>
+
+</html>
