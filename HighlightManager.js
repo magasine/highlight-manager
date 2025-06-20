@@ -1143,7 +1143,7 @@ javascript: (() => {
           .highlight.pulse-animation {
             animation: highlight-pulse 0.5s 2 !important;
             background-color: ${isDark ? "#ffd700" : "yellow"} !important;
-            box-shadow: 0 0 0 1px ${isDark ? "rgba(255, 215, 0, 0.5)" : "rgba(255, 255, 0, 0.5)"} !important;
+            box-shadow: 0 0 0 1px ${isDark ? "rgba(255, 215, 0, 0.5)" : "rgba(255, 215, 0, 0.5)"};
           }
           @keyframes highlight-pulse {
             0% { box-shadow: 0 0 0 0 ${isDark ? "rgba(255, 215, 0, 0.8)" : "rgba(255, 215, 0, 0.8)"}; }
@@ -1319,6 +1319,29 @@ javascript: (() => {
             opacity: 0.7;
             background-color: ${isDark ? "#3a3f47" : "#f0f0f0"};
           }
+          .highlight-manager-footer {
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+            border-bottom-left-radius: 6px; /* Adjusted radius to match popup */
+            border-bottom-right-radius: 6px; /* Adjusted radius to match popup */
+            background: ${isDark ? "#444" : "#f0f0f0"}; /* Adapted to theme */
+            color: ${isDark ? "#ddd" : "#666"}; /* Adapted to theme */
+            border-top: 1px solid ${isDark ? "#555" : "#ccc"};
+          }
+          .highlight-manager-footer a {
+            color: ${isDark ? "#ddd" : "#666"}; /* Adapted to theme */
+            /* color: ${isDark ? "#9bc5ef" : "#0645AD"};  Link color adapted to theme */
+            text-decoration: none;
+          }
+          .highlight-manager-footer a:hover {
+            text-decoration: underline;
+          }
         `,
         feedback: (type) => `
           position: fixed;
@@ -1384,6 +1407,13 @@ javascript: (() => {
             </div>
             <p class="instructions">Ctrl+Click para destacar texto.</p>
             <ul class="highlight-list"></ul>
+          </div>
+          <div class="highlight-manager-footer">
+            <span>v20250619</span>
+            |
+            <a href="https://linktr.ee/magasine" target="_blank">by @magasine</a>
+            |
+            <a href="https://drive.google.com/file/d/1OBEWwQdb6QCERRy2fciS0bJxMsCaDNCR/view?usp=sharing" target="_blank">Help</a>
           </div>
         </div>
       `;
