@@ -575,10 +575,13 @@ javascript: (() => {
       }
 
       // Novo: Aplicar tema salvo, se existir, caso contrário, usar a preferência do sistema
-      if (settings.theme && (settings.theme === "light" || settings.theme === "dark")) {
-          this.currentTheme = settings.theme;
+      if (
+        settings.theme &&
+        (settings.theme === "light" || settings.theme === "dark")
+      ) {
+        this.currentTheme = settings.theme;
       } else {
-          this.currentTheme = this.getSystemPreferredTheme();
+        this.currentTheme = this.getSystemPreferredTheme();
       }
       this.applyTheme(this.currentTheme);
     }
@@ -671,8 +674,9 @@ javascript: (() => {
         this.handleSortToggle()
       );
       // Novo: Listener para alternar tema manualmente (opcional, se quiser um botão)
-      elements.themeToggleBtn?.addEventListener("click", () => this.toggleTheme());
-
+      elements.themeToggleBtn?.addEventListener("click", () =>
+        this.toggleTheme()
+      );
 
       this.enableDrag(this.shadowHost, elements.popupHeader);
     }
@@ -952,10 +956,14 @@ javascript: (() => {
         e.preventDefault();
         e.stopPropagation();
 
+        // Garante que o elemento tenha posicionamento 'fixed' para arrasto relativo à janela.
+        element.style.position = "fixed";
+
+        // Captura as posições iniciais do mouse e do elemento
         startX = e.clientX;
         startY = e.clientY;
-        initialTop = parseInt(element.style.top) || 0;
-        initialLeft = parseInt(element.style.left) || 0;
+        initialTop = element.offsetTop; // Usar offsetTop para posição atual
+        initialLeft = element.offsetLeft; // Usar offsetLeft para posição atual
 
         document.addEventListener("mousemove", handleMouseMove);
         document.addEventListener("mouseup", handleMouseUp);
@@ -978,9 +986,32 @@ javascript: (() => {
           e.preventDefault();
           e.stopImmediatePropagation();
 
-          element.style.top = `${initialTop + dy}px`;
-          element.style.left = `${initialLeft + dx}px`;
+          // Calcula as novas posições potenciais
+          let newTop = initialTop + dy;
+          let newLeft = initialLeft + dx;
+
+          // Obtém as dimensões da janela e do elemento
+          const windowWidth = window.innerWidth;
+          const windowHeight = window.innerHeight;
+          const elementWidth = element.offsetWidth;
+          const elementHeight = element.offsetHeight;
+
+          // Limita a posição superior (não pode ir acima de 0)
+          newTop = Math.max(0, newTop);
+          // Limita a posição inferior (não pode ir abaixo de windowHeight - elementHeight)
+          newTop = Math.min(newTop, windowHeight - elementHeight);
+
+          // Limita a posição esquerda (não pode ir à esquerda de 0)
+          newLeft = Math.max(0, newLeft);
+          // Limita a posição direita (não pode ir à direita de windowWidth - elementWidth)
+          newLeft = Math.min(newLeft, windowWidth - elementWidth);
+
+          // Aplica as posições limitadas
+          element.style.top = `${newTop}px`;
+          element.style.left = `${newLeft}px`;
+          // Certifica-se de que 'right' e 'bottom' não interfiram
           element.style.right = "auto";
+          element.style.bottom = "auto";
         }
       };
 
@@ -1041,86 +1072,99 @@ javascript: (() => {
 
     /* ========== TEMA CLARO/ESCURO ========== */
     getSystemPreferredTheme() {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
     }
 
     setupThemeDetection() {
-        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-        this.currentTheme = this.getSystemPreferredTheme(); // Inicializa com a preferência do sistema
-        this.applyTheme(this.currentTheme); // Aplica o tema inicial
-        prefersDarkScheme.addEventListener('change', this.handleThemeChange);
-        this.mediaQueryList = prefersDarkScheme; // Armazenar para remover o listener
+      const prefersDarkScheme = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      );
+      this.currentTheme = this.getSystemPreferredTheme(); // Inicializa com a preferência do sistema
+      this.applyTheme(this.currentTheme); // Aplica o tema inicial
+      prefersDarkScheme.addEventListener("change", this.handleThemeChange);
+      this.mediaQueryList = prefersDarkScheme; // Armazenar para remover o listener
     }
 
     handleThemeChange(event) {
-        this.currentTheme = event.matches ? 'dark' : 'light';
-        this.applyTheme(this.currentTheme);
-        this.saveUISettings(); // Salva a nova preferência do tema
-        this.updateHighlightListUI(this.shadowRoot?.getElementById("search-input")?.value || ""); // Reaplicar estilos de destaque
+      this.currentTheme = event.matches ? "dark" : "light";
+      this.applyTheme(this.currentTheme);
+      this.saveUISettings(); // Salva a nova preferência do tema
+      this.updateHighlightListUI(
+        this.shadowRoot?.getElementById("search-input")?.value || ""
+      ); // Reaplicar estilos de destaque
     }
 
     removeThemeListeners() {
-        if (this.mediaQueryList) {
-            this.mediaQueryList.removeEventListener('change', this.handleThemeChange);
-        }
+      if (this.mediaQueryList) {
+        this.mediaQueryList.removeEventListener(
+          "change",
+          this.handleThemeChange
+        );
+      }
     }
 
     applyTheme(theme) {
-        this.currentTheme = theme;
-        if (this.shadowHost) {
-            this.shadowHost.classList.remove('light-theme', 'dark-theme');
-            this.shadowHost.classList.add(`${theme}-theme`);
+      this.currentTheme = theme;
+      if (this.shadowHost) {
+        this.shadowHost.classList.remove("light-theme", "dark-theme");
+        this.shadowHost.classList.add(`${theme}-theme`);
+      }
+
+      // Atualiza os estilos com base no tema
+      this.styles = this.getStyles(theme);
+
+      // Reinjeta o estilo global
+      this.injectGlobalHighlightStyle();
+
+      // Atualiza o estilo do popup dentro do shadow DOM
+      if (this.shadowRoot) {
+        let styleElement = this.shadowRoot.querySelector("style");
+        if (!styleElement) {
+          styleElement = this.createElementSafely("style");
+          this.shadowRoot.appendChild(styleElement);
         }
+        styleElement.textContent = this.trustedTypesPolicy
+          ? this.trustedTypesPolicy.createHTML(this.styles.popup)
+          : this.styles.popup;
+      }
 
-        // Atualiza os estilos com base no tema
-        this.styles = this.getStyles(theme);
-
-        // Reinjeta o estilo global
-        this.injectGlobalHighlightStyle();
-
-        // Atualiza o estilo do popup dentro do shadow DOM
-        if (this.shadowRoot) {
-            let styleElement = this.shadowRoot.querySelector('style');
-            if (!styleElement) {
-                styleElement = this.createElementSafely("style");
-                this.shadowRoot.appendChild(styleElement);
-            }
-            styleElement.textContent = this.trustedTypesPolicy
-                ? this.trustedTypesPolicy.createHTML(this.styles.popup)
-                : this.styles.popup;
-        }
-
-        // Reaplicar estilos a todos os destaques existentes
-        this.highlights.forEach((_, id) => {
-            const highlightSpans = document.querySelectorAll(`[id^="${id}-"]`);
-            highlightSpans.forEach(span => {
-                this.applyStyles(span, this.getHighlightStyle());
-            });
+      // Reaplicar estilos a todos os destaques existentes
+      this.highlights.forEach((_, id) => {
+        const highlightSpans = document.querySelectorAll(`[id^="${id}-"]`);
+        highlightSpans.forEach((span) => {
+          this.applyStyles(span, this.getHighlightStyle());
         });
+      });
 
-        // Atualizar a aparência dos links na lista de destaques
-        this.shadowRoot?.querySelectorAll('.highlight-list a').forEach(link => {
-            this.applyStyles(link, this.getHighlightLinkStyle(theme));
-        });
+      // Atualizar a aparência dos links na lista de destaques
+      this.shadowRoot?.querySelectorAll(".highlight-list a").forEach((link) => {
+        this.applyStyles(link, this.getHighlightLinkStyle(theme));
+      });
 
-         // Atualizar o texto do botão de alternância de tema, se existir
-         const themeToggleBtn = this.shadowRoot?.getElementById("theme-toggle");
-         if (themeToggleBtn) {
-             themeToggleBtn.textContent = this.currentTheme === "dark" ? "☀️ Light" : "🌙 Dark";
-         }
+      // Atualizar o texto do botão de alternância de tema, se existir
+      const themeToggleBtn = this.shadowRoot?.getElementById("theme-toggle");
+      if (themeToggleBtn) {
+        themeToggleBtn.textContent =
+          this.currentTheme === "dark" ? "☀️ Light" : "🌙 Dark";
+      }
     }
 
     toggleTheme() {
-        this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
-        this.applyTheme(this.currentTheme);
-        this.saveUISettings();
-        this.updateHighlightListUI(this.shadowRoot?.getElementById("search-input")?.value || "");
+      this.currentTheme = this.currentTheme === "light" ? "dark" : "light";
+      this.applyTheme(this.currentTheme);
+      this.saveUISettings();
+      this.updateHighlightListUI(
+        this.shadowRoot?.getElementById("search-input")?.value || ""
+      );
     }
 
     getHighlightLinkStyle(theme) {
-        return theme === 'dark' ? "text-decoration:none;color:#9bc5ef;cursor:pointer;" : "text-decoration:none;color:#0645AD;cursor:pointer;";
+      return theme === "dark"
+        ? "text-decoration:none;color:#9bc5ef;cursor:pointer;"
+        : "text-decoration:none;color:#0645AD;cursor:pointer;";
     }
-
 
     getStyles(theme) {
       const isDark = theme === "dark";
@@ -1131,7 +1175,9 @@ javascript: (() => {
             color: black;
             border-radius: 3px;
             padding: 0 2px;
-            box-shadow: 0 0 0 1px ${isDark ? "rgba(255, 215, 0, 0.5)" : "rgba(255, 255, 0, 0.5)"};
+            box-shadow: 0 0 0 1px ${
+              isDark ? "rgba(255, 215, 0, 0.5)" : "rgba(255, 255, 0, 0.5)"
+            };
             transition: all 0.3s ease;
           }
 
@@ -1143,12 +1189,20 @@ javascript: (() => {
           .highlight.pulse-animation {
             animation: highlight-pulse 0.5s 2 !important;
             background-color: ${isDark ? "#ffd700" : "yellow"} !important;
-            box-shadow: 0 0 0 1px ${isDark ? "rgba(255, 215, 0, 0.5)" : "rgba(255, 215, 0, 0.5)"};
+            box-shadow: 0 0 0 1px ${
+              isDark ? "rgba(255, 215, 0, 0.5)" : "rgba(255, 215, 0, 0.5)"
+            };
           }
           @keyframes highlight-pulse {
-            0% { box-shadow: 0 0 0 0 ${isDark ? "rgba(255, 215, 0, 0.8)" : "rgba(255, 215, 0, 0.8)"}; }
-            50% { box-shadow: 0 0 0 15px ${isDark ? "rgba(255, 215, 0, 0)" : "rgba(255, 215, 0, 0)"}; }
-            100% { box-shadow: 0 0 0 0 ${isDark ? "rgba(255, 215, 0, 0.8)" : "rgba(255, 215, 0, 0.8)"}; }
+            0% { box-shadow: 0 0 0 0 ${
+              isDark ? "rgba(255, 215, 0, 0.8)" : "rgba(255, 215, 0, 0.8)"
+            }; }
+            50% { box-shadow: 0 0 0 15px ${
+              isDark ? "rgba(255, 215, 0, 0)" : "rgba(255, 215, 0, 0)"
+            }; }
+            100% { box-shadow: 0 0 0 0 ${
+              isDark ? "rgba(255, 215, 0, 0.8)" : "rgba(255, 215, 0, 0.8)"
+            }; }
           }
         `,
         popup: `
@@ -1312,7 +1366,9 @@ javascript: (() => {
             color: ${isDark ? "#eee" : "#666"};
           }
           .highlight-list a {
-            color: ${isDark ? "#9bc5ef" : "#0645AD"}; /* Cor do link adaptada ao tema */
+            color: ${
+              isDark ? "#9bc5ef" : "#0645AD"
+            }; /* Cor do link adaptada ao tema */
           }
 
           #hide-toggle.hidden-state {
@@ -1336,7 +1392,9 @@ javascript: (() => {
           }
           .highlight-manager-footer a {
             color: ${isDark ? "#ddd" : "#666"}; /* Adapted to theme */
-            /* color: ${isDark ? "#9bc5ef" : "#0645AD"};  Link color adapted to theme */
+            /* color: ${
+              isDark ? "#9bc5ef" : "#0645AD"
+            };  Link color adapted to theme */
             text-decoration: none;
           }
           .highlight-manager-footer a:hover {
@@ -1378,7 +1436,8 @@ javascript: (() => {
 
     getPopupHTML() {
       // Adicionado um botão para alternar tema manualmente, é opcional.
-      const themeToggleButtonText = this.currentTheme === "dark" ? "☀️ Light" : "🌙 Dark";
+      const themeToggleButtonText =
+        this.currentTheme === "dark" ? "☀️ Light" : "🌙 Dark";
       return `
         <div class="popup">
           <div class="header" id="popup-header">
