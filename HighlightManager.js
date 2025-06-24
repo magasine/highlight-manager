@@ -11,6 +11,8 @@ javascript: (() => {
       this.handleBeforeUnload = this.handleBeforeUnload.bind(this);
       this.destroy = this.destroy.bind(this);
       this.handleThemeChange = this.handleThemeChange.bind(this); // Novo binding
+      this.copyHighlightText = this.copyHighlightText.bind(this); // Novo binding para copiar texto
+      this.checkGlobalVisibilityState = this.checkGlobalVisibilityState.bind(this); // NOVO BINDING
 
       // Trusted Types policy creation
       this.trustedTypesPolicy = this.createTrustedTypesPolicy();
@@ -44,7 +46,7 @@ javascript: (() => {
     initProperties() {
       this.popupId = "highlight-popup";
       this.highlights = new Map();
-      this.hidden = false;
+      this.hidden = false; // Estado global para o botão "Hide/Show"
       this.updatePending = false;
       this.restoreQueue = new Map();
       this.sortOrder = "asc";
@@ -63,6 +65,7 @@ javascript: (() => {
         hideHighlights: "Hide",
         showHighlights: "Show",
         selectionTooLong: `Seleção muito longa (máximo ${this.maxSelectionLength} caracteres)`,
+        copiedToClipboard: "Copiado para a área de transferência!", // Nova string
       };
 
       // Styles e popupHTML serão definidos e atualizados dinamicamente
@@ -120,6 +123,10 @@ javascript: (() => {
       this.disconnectObservers();
       this.removeDOMElements();
       this.removeThemeListeners(); // Novo: Remover listeners de tema
+      // Remover event listeners dos destaques existentes para evitar vazamento de memória
+      document.querySelectorAll('.highlight').forEach(el => {
+        el.removeEventListener('click', this.copyHighlightText);
+      });
     }
 
     removeEventListeners() {
@@ -294,6 +301,7 @@ javascript: (() => {
       this.saveToStorage();
       this.addHighlightItem(highlightData);
       this.updateHighlightListUI();
+      this.checkGlobalVisibilityState(); // NOVO: Atualiza o estado do botão "Hide/Show"
 
       return true;
     }
@@ -323,6 +331,7 @@ javascript: (() => {
           },
         ],
         createdAt: Date.now(),
+        visible: true // Adiciona a propriedade 'visible' ao dado do destaque, padrão true
       };
     }
 
@@ -353,11 +362,20 @@ javascript: (() => {
     }
 
     createHighlightSpan(id) {
-      return this.createElementSafely("span", {
+      const span = this.createElementSafely("span", {
         className: "highlight",
         id: `${id}-0`,
         style: this.getHighlightStyle(),
       });
+      // Adicionar event listener para copiar o texto ao clicar
+      span.addEventListener('click', (e) => {
+        e.stopPropagation(); // Evita que o clique se propague e afete outras coisas (como fechar seleções)
+        const highlightData = this.highlights.get(id);
+        if (highlightData) {
+          this.copyHighlightText(highlightData.text);
+        }
+      });
+      return span;
     }
 
     fallbackHighlightCreation(range, span, text) {
@@ -366,14 +384,14 @@ javascript: (() => {
       range.insertNode(span);
     }
 
-    getHighlightStyle() {
+    getHighlightStyle(isVisible = true) { // Adicionado parâmetro isVisible
       // Estilo de destaque baseado no tema atual
-      if (this.hidden) {
+      if (!isVisible) { // Se não estiver visível (checkbox desmarcado)
         return "background-color: transparent; box-shadow: none; border-radius: 0; padding: 0;";
-      } else {
+      } else { // Se estiver visível (checkbox marcado)
         return this.currentTheme === "dark"
-          ? "background-color: #ffd700; box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.5); border-radius: 3px; padding: 0 2px; color: black;"
-          : "background-color: yellow; box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.5); border-radius: 3px; padding: 0 2px; color: black;";
+          ? "background-color: #ffd700; box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.5); border-radius: 3px; padding: 0 2px; color: black; cursor: pointer;"
+          : "background-color: yellow; box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.5); border-radius: 3px; padding: 0 2px; color: black; cursor: pointer;";
       }
     }
 
@@ -398,7 +416,9 @@ javascript: (() => {
           parentElement,
           part.textSegment,
           part.startOffsetInParentText,
-          fullId
+          fullId,
+          highlightData.id,
+          highlightData.visible // Passa o estado de visibilidade
         );
       } catch (error) {
         console.error(`Error restoring highlight ${highlightData.id}:`, error);
@@ -406,7 +426,7 @@ javascript: (() => {
       }
     }
 
-    findAndHighlightText(parentEl, textToFind, initialOffset, highlightId) {
+    findAndHighlightText(parentEl, textToFind, initialOffset, highlightId, originalHighlightId, isVisible = true) {
       const fullText = parentEl.textContent;
       let foundIndex =
         fullText.indexOf(textToFind, initialOffset) ||
@@ -427,8 +447,10 @@ javascript: (() => {
       );
 
       if (nodes.startNode && nodes.endNode) {
-        const span = this.createHighlightSpan(highlightId);
-        if (this.hidden) span.classList.add("hidden");
+        const span = this.createHighlightSpan(originalHighlightId); // Usar o ID original
+        // Aplica o estilo de visibilidade inicial baseado no isVisible
+        this.applyStyles(span, this.getHighlightStyle(isVisible));
+        if (!isVisible) span.classList.add("hidden"); // Adiciona a classe hidden se não for visível
 
         try {
           range.setStart(nodes.startNode, nodes.startOffset);
@@ -483,6 +505,7 @@ javascript: (() => {
           setTimeout(() => {
             const data = this.highlights.get(id);
             if (data) {
+              // Passa o estado de visibilidade salvo
               const success = this.restoreHighlight(data);
               if (!success) {
                 console.warn(`Failed to restore highlight ${id}`);
@@ -491,8 +514,20 @@ javascript: (() => {
               }
             }
             this.restoreQueue.delete(id);
+            this.checkGlobalVisibilityState(); // Garante que o botão global se atualize após restauração
           }, 1000)
         );
+      }
+    }
+
+    /* ========== COPY TO CLIPBOARD FUNCTIONALITY ========== */
+    async copyHighlightText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        this.showFeedback(this.strings.copiedToClipboard, "success");
+      } catch (err) {
+        console.error("Failed to copy text: ", err);
+        this.showFeedback("Falha ao copiar o texto.", "error");
       }
     }
 
@@ -523,10 +558,10 @@ javascript: (() => {
           left: this.shadowHost.style.left,
         },
         sortOrder: this.sortOrder,
-        hidden: this.hidden,
+        hidden: this.hidden, // Salva o estado global do botão Hide/Show
         minimized:
           this.shadowRoot?.querySelector(".content").style.display === "none",
-        theme: this.currentTheme, // Salvar o tema atual
+        theme: this.currentTheme,
       };
       localStorage.setItem(
         "highlightManagerUISettings",
@@ -538,8 +573,8 @@ javascript: (() => {
       try {
         const saved = localStorage.getItem("highlightManagerUISettings");
         if (!saved) {
-          this.hidden = false; // Valor padrão explícito
-          this.currentTheme = this.getSystemPreferredTheme(); // Carrega o tema do sistema se não houver configurações salvas
+          this.hidden = false;
+          this.currentTheme = this.getSystemPreferredTheme();
           return;
         }
         const settings = JSON.parse(saved);
@@ -570,11 +605,9 @@ javascript: (() => {
       }
 
       if (typeof settings.hidden === "boolean") {
-        this.hidden = settings.hidden;
-        this.updateHideButton();
+        this.hidden = settings.hidden; // Carrega o estado global
       }
 
-      // Novo: Aplicar tema salvo, se existir, caso contrário, usar a preferência do sistema
       if (
         settings.theme &&
         (settings.theme === "light" || settings.theme === "dark")
@@ -593,12 +626,17 @@ javascript: (() => {
       try {
         const parsed = JSON.parse(saved);
         parsed.forEach((item) => {
+          // Garante que 'visible' exista, mesmo para destaques antigos
+          if (item.visible === undefined) {
+            item.visible = true;
+          }
           if (!this.highlights.has(item.id)) {
             this.highlights.set(item.id, item);
             this.scheduleHighlightRestore(item.id);
           }
         });
         this.updateHighlightListUI();
+        this.checkGlobalVisibilityState(); // NOVO: Verifica o estado global após carregar destaques
       } catch (err) {
         console.error("Error loading highlights:", err);
         localStorage.removeItem("highlights");
@@ -629,24 +667,20 @@ javascript: (() => {
       this.renderPopupContent();
       this.setupPopupEventListeners();
       this.enableDrag();
-      this.updateHideButton();
       this.applyTheme(this.currentTheme); // Aplicar o tema inicial aqui
+      this.checkGlobalVisibilityState(); // NOVO: Chamar para garantir que o botão "Hide/Show" esteja correto
     }
 
     renderPopupContent() {
       const container = this.createElementSafely("div");
 
-      const initialHideBtnText = this.strings.hideHighlights;
-      const popupHTML = this.getPopupHTML().replace(
-        "${this.strings.hideHighlights}",
-        initialHideBtnText
-      );
-
+      // O texto do botão será definido pelo checkGlobalVisibilityState
+      const popupHTML = this.getPopupHTML();
       this.setInnerHTMLSafely(container, popupHTML);
       this.shadowRoot.appendChild(container);
 
       // Estilos serão injetados por applyTheme
-      this.updateHideButton();
+      this.updateHideButton(); // Chamado aqui para definir o estado inicial do botão
     }
 
     setupPopupEventListeners() {
@@ -673,7 +707,6 @@ javascript: (() => {
       elements.sortToggleBtn.addEventListener("click", () =>
         this.handleSortToggle()
       );
-      // Novo: Listener para alternar tema manualmente (opcional, se quiser um botão)
       elements.themeToggleBtn?.addEventListener("click", () =>
         this.toggleTheme()
       );
@@ -692,7 +725,7 @@ javascript: (() => {
         sortToggleBtn: this.shadowRoot.getElementById("sort-toggle"),
         popupHeader: this.shadowRoot.getElementById("popup-header"),
         content: this.shadowRoot.querySelector(".content"),
-        themeToggleBtn: this.shadowRoot.getElementById("theme-toggle"), // Novo elemento
+        themeToggleBtn: this.shadowRoot.getElementById("theme-toggle"),
       };
     }
 
@@ -700,26 +733,30 @@ javascript: (() => {
       if (confirm(this.strings.confirmClear)) {
         this.clearHighlights();
         this.showFeedback("Todos os destaques foram removidos", "success");
+        this.checkGlobalVisibilityState(); // NOVO: Atualiza o botão após limpar
       }
     }
 
     handleHideToggle() {
+      // Alterna o estado global
       this.hidden = !this.hidden;
-      this.updateHideButton();
       this.saveUISettings();
 
-      // Atualizar todos os highlights
-      this.highlights.forEach((_, id) => {
-        this.toggleHighlightVisibility(id, !this.hidden);
+      // Aplica o estado de visibilidade a TODOS os destaques e seus checkboxes
+      this.highlights.forEach((highlightData, id) => {
+        highlightData.visible = !this.hidden; // Atualiza o dado
+        this.toggleHighlightVisibility(id, highlightData.visible);
 
-        // Atualizar o estado do checkbox correspondente
         const checkbox = this.shadowRoot.querySelector(
           `#li-${id} input[type="checkbox"]`
         );
         if (checkbox) {
-          checkbox.checked = !this.hidden;
+          checkbox.checked = highlightData.visible;
         }
       });
+      // Atualiza o botão "Hide/Show" com base no novo estado global
+      this.updateHideButton();
+      this.saveToStorage(); // Salva o estado de visibilidade de todos os destaques
     }
 
     handleCloseClick(e) {
@@ -776,6 +813,7 @@ javascript: (() => {
       }
     }
 
+    // NOVO/ATUALIZADO: Atualiza o texto e estilo do botão Hide/Show baseado em this.hidden
     updateHideButton() {
       const hideBtn = this.shadowRoot.getElementById("hide-toggle");
       if (hideBtn) {
@@ -783,7 +821,6 @@ javascript: (() => {
           ? this.strings.showHighlights
           : this.strings.hideHighlights;
 
-        // Adicionar/remover classe para feedback visual
         if (this.hidden) {
           hideBtn.classList.add("hidden-state");
         } else {
@@ -792,18 +829,54 @@ javascript: (() => {
       }
     }
 
-    addHighlightItem({ id, text }) {
+    // NOVO MÉTODO: Verifica o estado de visibilidade de todos os destaques
+    checkGlobalVisibilityState() {
+      if (!this.shadowRoot) return;
+
+      const totalHighlights = this.highlights.size;
+      if (totalHighlights === 0) {
+        this.hidden = false; // Se não houver destaques, o botão deve mostrar "Hide" (ou seja, não há nada escondido)
+        this.updateHideButton();
+        return;
+      }
+
+      let allVisible = true;
+      let anyHidden = false;
+
+      this.highlights.forEach(highlightData => {
+        if (!highlightData.visible) {
+          anyHidden = true;
+        } else {
+          // Apenas para ter certeza, se um destaque está visível, então nem todos estão escondidos
+          // (embora allVisible = false já trataria isso)
+        }
+      });
+
+      // Se qualquer destaque estiver escondido, o botão global deve ser "Show"
+      if (anyHidden) {
+        this.hidden = true; // O estado global reflete que há algo para "Mostrar"
+      } else {
+        // Se NENHUM estiver escondido (todos estão visíveis), o botão global deve ser "Hide"
+        this.hidden = false;
+      }
+      this.updateHideButton();
+    }
+
+
+    addHighlightItem({ id, text, visible }) { // Adiciona 'visible' como parâmetro
       const list = this.shadowRoot?.querySelector(".highlight-list");
       if (!list || this.shadowRoot.getElementById(`li-${id}`)) return;
 
       const li = this.createElementSafely("li", { id: `li-${id}` });
       const removeBtn = this.createRemoveButton(id);
-      const checkbox = this.createVisibilityCheckbox(id);
+      const checkbox = this.createVisibilityCheckbox(id, visible); // Passa 'visible' para o checkbox
       const link = this.createHighlightLink(id, text);
 
       li.append(removeBtn, checkbox, link);
       list.appendChild(li);
-      this.toggleHighlightVisibility(id, checkbox.checked);
+      // A visibilidade do highlight real no DOM será definida pelo checkbox handler
+      // ou pelo toggleHighlightVisibility chamado no restoreHighlight.
+      // O importante é que a propriedade 'visible' no highlightData esteja correta.
     }
 
     createRemoveButton(id) {
@@ -814,20 +887,27 @@ javascript: (() => {
       removeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         this.removeHighlightById(id);
+        this.checkGlobalVisibilityState(); // NOVO: Atualiza o botão após remover
       });
       return removeBtn;
     }
 
-    createVisibilityCheckbox(id) {
+    createVisibilityCheckbox(id, initialVisibility) { // Recebe o estado inicial
       const checkbox = this.createElementSafely("input", {
         attributes: {
           type: "checkbox",
-          checked: !this.hidden,
+          checked: initialVisibility, // Define o estado inicial do checkbox
         },
       });
       checkbox.addEventListener("change", (e) => {
         e.stopPropagation();
-        this.toggleHighlightVisibility(id, e.target.checked);
+        const highlightData = this.highlights.get(id);
+        if (highlightData) {
+          highlightData.visible = e.target.checked; // Atualiza o estado no objeto de dados
+          this.toggleHighlightVisibility(id, e.target.checked);
+          this.saveToStorage(); // Salva a mudança de visibilidade
+          this.checkGlobalVisibilityState(); // NOVO: Atualiza o estado do botão "Hide/Show"
+        }
       });
       return checkbox;
     }
@@ -837,7 +917,7 @@ javascript: (() => {
         textContent: this.escapeHTML(
           text.length > 30 ? `${text.slice(0, 30)}…` : text
         ),
-        style: "text-decoration:none;cursor:pointer;", // Removendo cor fixa
+        style: "text-decoration:none;cursor:pointer;",
         attributes: { href: `#${id}` },
       });
       link.addEventListener("click", (e) => {
@@ -849,6 +929,7 @@ javascript: (() => {
 
     removeHighlightById(id) {
       document.querySelectorAll(`[id^="${id}-"]`).forEach((el) => {
+        el.removeEventListener('click', this.copyHighlightText);
         el.replaceWith(...el.childNodes);
       });
       this.highlights.delete(id);
@@ -860,14 +941,9 @@ javascript: (() => {
       const highlights = document.querySelectorAll(`[id^="${id}-"]`);
       if (!highlights.length) return;
 
-      const style = visible
-        ? this.getHighlightStyle() // Usar o estilo de destaque do tema
-        : "background-color: transparent; box-shadow: none; border-radius: 0; padding: 0;";
-
+      const style = this.getHighlightStyle(visible); // Passa o estado de visibilidade
       highlights.forEach((el) => {
         this.applyStyles(el, style);
-
-        // Atualizar classe para estilização adicional se necessário
         visible ? el.classList.remove("hidden") : el.classList.add("hidden");
       });
     }
@@ -880,7 +956,13 @@ javascript: (() => {
       firstPart.scrollIntoView({ behavior: "smooth", block: "center" });
 
       setTimeout(() => {
-        this.applyStyles(firstPart, "");
+        // Reaplica o estilo original de visibilidade após a animação
+        const highlightData = this.highlights.get(id);
+        if (highlightData) {
+          this.applyStyles(firstPart, this.getHighlightStyle(highlightData.visible));
+        } else {
+           this.applyStyles(firstPart, ""); // Se por algum motivo o destaque sumiu, limpa o estilo
+        }
       }, 1000);
     }
 
@@ -893,7 +975,7 @@ javascript: (() => {
       list.innerHTML = ""; // Clear existing items
 
       const highlightsArray = this.filterAndSortHighlights(filterText);
-      highlightsArray.forEach((item) => this.addHighlightItem(item));
+      highlightsArray.forEach((item) => this.addHighlightItem(item)); // item agora inclui 'visible'
     }
 
     filterAndSortHighlights(filterText) {
@@ -918,6 +1000,7 @@ javascript: (() => {
     clearHighlights() {
       this.highlights.forEach((_, id) => {
         document.querySelectorAll(`[id^="${id}-"]`).forEach((el) => {
+          el.removeEventListener('click', this.copyHighlightText);
           el.replaceWith(...el.childNodes);
         });
       });
@@ -926,19 +1009,9 @@ javascript: (() => {
       this.updateHighlightListUI();
     }
 
+    // Este método agora é tratado por handleHideToggle e checkGlobalVisibilityState
     toggleHighlightsVisibility() {
-      this.hidden = !this.hidden;
-      this.updateHideButton();
-
-      this.highlights.forEach((_, id) => {
-        const checkbox = this.shadowRoot.querySelector(
-          `#li-${id} input[type="checkbox"]`
-        );
-        if (checkbox) {
-          checkbox.checked = !this.hidden;
-          this.toggleHighlightVisibility(id, !this.hidden);
-        }
-      });
+        console.warn("toggleHighlightsVisibility is deprecated. Use handleHideToggle.");
     }
 
     enableDrag() {
@@ -956,14 +1029,12 @@ javascript: (() => {
         e.preventDefault();
         e.stopPropagation();
 
-        // Garante que o elemento tenha posicionamento 'fixed' para arrasto relativo à janela.
         element.style.position = "fixed";
 
-        // Captura as posições iniciais do mouse e do elemento
         startX = e.clientX;
         startY = e.clientY;
-        initialTop = element.offsetTop; // Usar offsetTop para posição atual
-        initialLeft = element.offsetLeft; // Usar offsetLeft para posição atual
+        initialTop = element.offsetTop;
+        initialLeft = element.offsetLeft;
 
         document.addEventListener("mousemove", handleMouseMove);
         document.addEventListener("mouseup", handleMouseUp);
@@ -986,30 +1057,22 @@ javascript: (() => {
           e.preventDefault();
           e.stopImmediatePropagation();
 
-          // Calcula as novas posições potenciais
           let newTop = initialTop + dy;
           let newLeft = initialLeft + dx;
 
-          // Obtém as dimensões da janela e do elemento
           const windowWidth = window.innerWidth;
           const windowHeight = window.innerHeight;
           const elementWidth = element.offsetWidth;
           const elementHeight = element.offsetHeight;
 
-          // Limita a posição superior (não pode ir acima de 0)
           newTop = Math.max(0, newTop);
-          // Limita a posição inferior (não pode ir abaixo de windowHeight - elementHeight)
           newTop = Math.min(newTop, windowHeight - elementHeight);
 
-          // Limita a posição esquerda (não pode ir à esquerda de 0)
           newLeft = Math.max(0, newLeft);
-          // Limita a posição direita (não pode ir à direita de windowWidth - elementWidth)
           newLeft = Math.min(newLeft, windowWidth - elementWidth);
 
-          // Aplica as posições limitadas
           element.style.top = `${newTop}px`;
           element.style.left = `${newLeft}px`;
-          // Certifica-se de que 'right' e 'bottom' não interfiram
           element.style.right = "auto";
           element.style.bottom = "auto";
         }
@@ -1039,7 +1102,6 @@ javascript: (() => {
     }
 
     injectGlobalHighlightStyle() {
-      // Este método será agora chamado por applyTheme
       const styleId = "highlight-style-injected";
       let styleElement = document.getElementById(styleId);
       if (!styleElement) {
@@ -1055,7 +1117,7 @@ javascript: (() => {
       this.mutationObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-            this.highlights.forEach((_, id) => {
+            this.highlights.forEach((data, id) => {
               if (!document.getElementById(`${id}-0`)) {
                 this.scheduleHighlightRestore(id);
               }
@@ -1081,19 +1143,23 @@ javascript: (() => {
       const prefersDarkScheme = window.matchMedia(
         "(prefers-color-scheme: dark)"
       );
-      this.currentTheme = this.getSystemPreferredTheme(); // Inicializa com a preferência do sistema
-      this.applyTheme(this.currentTheme); // Aplica o tema inicial
+      this.currentTheme = this.getSystemPreferredTheme();
+      this.applyTheme(this.currentTheme);
       prefersDarkScheme.addEventListener("change", this.handleThemeChange);
-      this.mediaQueryList = prefersDarkScheme; // Armazenar para remover o listener
+      this.mediaQueryList = prefersDarkScheme;
     }
 
     handleThemeChange(event) {
       this.currentTheme = event.matches ? "dark" : "light";
       this.applyTheme(this.currentTheme);
-      this.saveUISettings(); // Salva a nova preferência do tema
+      this.saveUISettings();
+      // Reaplicar estilos de destaque (incluindo visibilidade)
+      this.highlights.forEach((highlightData, id) => {
+        this.toggleHighlightVisibility(id, highlightData.visible);
+      });
       this.updateHighlightListUI(
         this.shadowRoot?.getElementById("search-input")?.value || ""
-      ); // Reaplicar estilos de destaque
+      );
     }
 
     removeThemeListeners() {
@@ -1112,13 +1178,10 @@ javascript: (() => {
         this.shadowHost.classList.add(`${theme}-theme`);
       }
 
-      // Atualiza os estilos com base no tema
       this.styles = this.getStyles(theme);
 
-      // Reinjeta o estilo global
       this.injectGlobalHighlightStyle();
 
-      // Atualiza o estilo do popup dentro do shadow DOM
       if (this.shadowRoot) {
         let styleElement = this.shadowRoot.querySelector("style");
         if (!styleElement) {
@@ -1130,20 +1193,15 @@ javascript: (() => {
           : this.styles.popup;
       }
 
-      // Reaplicar estilos a todos os destaques existentes
-      this.highlights.forEach((_, id) => {
-        const highlightSpans = document.querySelectorAll(`[id^="${id}-"]`);
-        highlightSpans.forEach((span) => {
-          this.applyStyles(span, this.getHighlightStyle());
-        });
+      // Reaplicar estilos a todos os destaques existentes com base em seu estado 'visible'
+      this.highlights.forEach((highlightData, id) => {
+        this.toggleHighlightVisibility(id, highlightData.visible);
       });
 
-      // Atualizar a aparência dos links na lista de destaques
       this.shadowRoot?.querySelectorAll(".highlight-list a").forEach((link) => {
         this.applyStyles(link, this.getHighlightLinkStyle(theme));
       });
 
-      // Atualizar o texto do botão de alternância de tema, se existir
       const themeToggleBtn = this.shadowRoot?.getElementById("theme-toggle");
       if (themeToggleBtn) {
         themeToggleBtn.textContent =
@@ -1179,6 +1237,7 @@ javascript: (() => {
               isDark ? "rgba(255, 215, 0, 0.5)" : "rgba(255, 255, 0, 0.5)"
             };
             transition: all 0.3s ease;
+            cursor: pointer;
           }
 
           .highlight.hidden {
@@ -1384,17 +1443,14 @@ javascript: (() => {
             align-items: center;
             gap: 4px;
             flex-wrap: wrap;
-            border-bottom-left-radius: 6px; /* Adjusted radius to match popup */
-            border-bottom-right-radius: 6px; /* Adjusted radius to match popup */
-            background: ${isDark ? "#444" : "#f0f0f0"}; /* Adapted to theme */
-            color: ${isDark ? "#ddd" : "#666"}; /* Adapted to theme */
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            background: ${isDark ? "#444" : "#f0f0f0"};
+            color: ${isDark ? "#ddd" : "#666"};
             border-top: 1px solid ${isDark ? "#555" : "#ccc"};
           }
           .highlight-manager-footer a {
-            color: ${isDark ? "#ddd" : "#666"}; /* Adapted to theme */
-            /* color: ${
-              isDark ? "#9bc5ef" : "#0645AD"
-            };  Link color adapted to theme */
+            color: ${isDark ? "#ddd" : "#666"};
             text-decoration: none;
           }
           .highlight-manager-footer a:hover {
@@ -1435,7 +1491,6 @@ javascript: (() => {
     }
 
     getPopupHTML() {
-      // Adicionado um botão para alternar tema manualmente, é opcional.
       const themeToggleButtonText =
         this.currentTheme === "dark" ? "☀️ Light" : "🌙 Dark";
       return `
@@ -1450,7 +1505,7 @@ javascript: (() => {
           </div>
           <div class="content">
             <div class="toolbar">
-              <button id="hide-toggle">${
+              <button id="hide-toggle">${ // Texto inicial será definido por checkGlobalVisibilityState
                 this.hidden
                   ? this.strings.showHighlights
                   : this.strings.hideHighlights
@@ -1464,11 +1519,11 @@ javascript: (() => {
               </div>
               <button id="sort-toggle" title="Sort A-Z/Z-A">A-Z ⇅</button>
             </div>
-            <p class="instructions">Ctrl+Click para destacar texto.</p>
+            <p class="instructions">To highlight: "Ctrl+Click" on the selection.<br>To copy: "Click" on the highlight.</p>
             <ul class="highlight-list"></ul>
           </div>
           <div class="highlight-manager-footer">
-            <span>v20250619</span>
+            <span>v20250624</span>
             |
             <a href="https://linktr.ee/magasine" target="_blank">by @magasine</a>
             |
@@ -1491,5 +1546,4 @@ javascript: (() => {
   }
 
   const manager = new HighlightManager();
-  setTimeout(() => manager.updateHighlightListUI(), 0);
 })();
