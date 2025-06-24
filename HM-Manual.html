@@ -303,11 +303,13 @@
                     lista e da página.</li>
                 <li><strong>Caixa de Seleção (Checkbox):</strong> Permite
                     alternar a visibilidade de um destaque específico na
-                    página.</li>
+                    página. O estado desta caixa de seleção influencia o
+                    status do botão global "Ocultar/Exibir Todos os Destaques".</li>
                 <li><strong>Link do Destaque:</strong> Clique no texto do
-                    destaque para rolar a página até a localização original
-                    do destaque. O destaque piscará brevemente para
+                    destaque na lista para rolar a página até a localização
+                    original do destaque. O destaque piscará brevemente para
                     facilitar a identificação.</li>
+                <li><strong>Copiar Destaque:</strong> Clique diretamente sobre o texto destacado na página para copiá-lo para a área de transferência. Uma notificação confirmará a cópia.</li>
             </ul>
 
             <h3>4.2. Busca de Destaques</h3>
@@ -335,13 +337,18 @@
 
             <h3>4.4. Ocultar/Exibir Todos os Destaques</h3>
             <p>Você pode ocultar ou exibir todos os destaques na página de
-                uma vez.</p>
+                uma vez. O status deste botão (<span class="code-snippet">Hide</span> ou <span class="code-snippet">Show</span>)
+                reflete a visibilidade geral dos destaques: ele exibirá "Hide" se todos os destaques estiverem
+                visíveis, e "Show" se pelo menos um destaque estiver oculto.
+            </p>
             <ul>
                 <li><strong>Botão Ocultar/Exibir:</strong> <span class="code-snippet">Hide</span> (Ocultar) / <span
                         class="code-snippet">Show</span> (Exibir). Clique
                     para alternar a visibilidade global de todos os
                     destaques. Isso não remove os destaques, apenas os torna
-                    transparentes.</li>
+                    transparentes. Ao clicar, todas as caixas de seleção
+                    individuais serão atualizadas para refletir o novo estado
+                    global.</li>
             </ul>
 
             <h3>4.5. Limpar Todos os Destaques</h3>
