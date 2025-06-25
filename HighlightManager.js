@@ -12,7 +12,8 @@ javascript: (() => {
       this.destroy = this.destroy.bind(this);
       this.handleThemeChange = this.handleThemeChange.bind(this); // Novo binding
       this.copyHighlightText = this.copyHighlightText.bind(this); // Novo binding para copiar texto
-      this.checkGlobalVisibilityState = this.checkGlobalVisibilityState.bind(this); // NOVO BINDING
+      this.checkGlobalVisibilityState =
+        this.checkGlobalVisibilityState.bind(this); // NOVO BINDING
 
       // Trusted Types policy creation
       this.trustedTypesPolicy = this.createTrustedTypesPolicy();
@@ -49,7 +50,7 @@ javascript: (() => {
       this.hidden = false; // Estado global para o botão "Hide/Show"
       this.updatePending = false;
       this.restoreQueue = new Map();
-      this.sortOrder = "asc";
+      this.sortOrder = "creation";
       this.maxSelectionLength = 10000;
       this.currentTheme = "light"; // Padrão: light
 
@@ -124,8 +125,8 @@ javascript: (() => {
       this.removeDOMElements();
       this.removeThemeListeners(); // Novo: Remover listeners de tema
       // Remover event listeners dos destaques existentes para evitar vazamento de memória
-      document.querySelectorAll('.highlight').forEach(el => {
-        el.removeEventListener('click', this.copyHighlightText);
+      document.querySelectorAll(".highlight").forEach((el) => {
+        el.removeEventListener("click", this.copyHighlightText);
       });
     }
 
@@ -331,7 +332,7 @@ javascript: (() => {
           },
         ],
         createdAt: Date.now(),
-        visible: true // Adiciona a propriedade 'visible' ao dado do destaque, padrão true
+        visible: true, // Adiciona a propriedade 'visible' ao dado do destaque, padrão true
       };
     }
 
@@ -368,7 +369,7 @@ javascript: (() => {
         style: this.getHighlightStyle(),
       });
       // Adicionar event listener para copiar o texto ao clicar
-      span.addEventListener('click', (e) => {
+      span.addEventListener("click", (e) => {
         e.stopPropagation(); // Evita que o clique se propague e afete outras coisas (como fechar seleções)
         const highlightData = this.highlights.get(id);
         if (highlightData) {
@@ -384,11 +385,14 @@ javascript: (() => {
       range.insertNode(span);
     }
 
-    getHighlightStyle(isVisible = true) { // Adicionado parâmetro isVisible
+    getHighlightStyle(isVisible = true) {
+      // Adicionado parâmetro isVisible
       // Estilo de destaque baseado no tema atual
-      if (!isVisible) { // Se não estiver visível (checkbox desmarcado)
+      if (!isVisible) {
+        // Se não estiver visível (checkbox desmarcado)
         return "background-color: transparent; box-shadow: none; border-radius: 0; padding: 0;";
-      } else { // Se estiver visível (checkbox marcado)
+      } else {
+        // Se estiver visível (checkbox marcado)
         return this.currentTheme === "dark"
           ? "background-color: #ffd700; box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.5); border-radius: 3px; padding: 0 2px; color: black; cursor: pointer;"
           : "background-color: yellow; box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.5); border-radius: 3px; padding: 0 2px; color: black; cursor: pointer;";
@@ -426,7 +430,14 @@ javascript: (() => {
       }
     }
 
-    findAndHighlightText(parentEl, textToFind, initialOffset, highlightId, originalHighlightId, isVisible = true) {
+    findAndHighlightText(
+      parentEl,
+      textToFind,
+      initialOffset,
+      highlightId,
+      originalHighlightId,
+      isVisible = true
+    ) {
       const fullText = parentEl.textContent;
       let foundIndex =
         fullText.indexOf(textToFind, initialOffset) ||
@@ -798,7 +809,19 @@ javascript: (() => {
     }
 
     handleSortToggle() {
-      this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
+      if (this.sortOrder === "creation") {
+        this.sortOrder = "asc"; // Vai para A-Z
+      } else if (this.sortOrder === "asc") {
+        this.sortOrder = "desc"; // Vai para Z-A
+      } else {
+        // this.sortOrder === "desc"
+        this.sortOrder = "creation"; // Volta para ordem de criação
+      }
+      this.updateSortButton();
+      this.updateHighlightListUI(
+        this.shadowRoot.getElementById("search-input").value
+      );
+      this.saveUISettings();
       this.updateSortButton();
       this.updateHighlightListUI(
         this.shadowRoot.getElementById("search-input").value
@@ -809,7 +832,17 @@ javascript: (() => {
     updateSortButton() {
       const sortBtn = this.shadowRoot.getElementById("sort-toggle");
       if (sortBtn) {
-        sortBtn.textContent = this.sortOrder === "asc" ? "A-Z ↑" : "Z-A ↓";
+        if (this.sortOrder === "creation") {
+          sortBtn.textContent = "↓ Creation (No Sort)"; // Ou "Default", "Definição", "Original"
+          sortBtn.title = "Next sort by text (A-Z)";
+        } else if (this.sortOrder === "asc") {
+          sortBtn.textContent = "↑ Asc (A-Z)";
+          sortBtn.title = "Next sort by text (Z-A)";
+        } else {
+          // this.sortOrder === "desc"
+          sortBtn.textContent = "↓ Desc (Z-A)";
+          sortBtn.title = "Next sort by creation time"; // Volta para ordem de criação
+        }
       }
     }
 
@@ -843,7 +876,7 @@ javascript: (() => {
       let allVisible = true;
       let anyHidden = false;
 
-      this.highlights.forEach(highlightData => {
+      this.highlights.forEach((highlightData) => {
         if (!highlightData.visible) {
           anyHidden = true;
         } else {
@@ -862,8 +895,8 @@ javascript: (() => {
       this.updateHideButton();
     }
 
-
-    addHighlightItem({ id, text, visible }) { // Adiciona 'visible' como parâmetro
+    addHighlightItem({ id, text, visible }) {
+      // Adiciona 'visible' como parâmetro
       const list = this.shadowRoot?.querySelector(".highlight-list");
       if (!list || this.shadowRoot.getElementById(`li-${id}`)) return;
 
@@ -892,7 +925,8 @@ javascript: (() => {
       return removeBtn;
     }
 
-    createVisibilityCheckbox(id, initialVisibility) { // Recebe o estado inicial
+    createVisibilityCheckbox(id, initialVisibility) {
+      // Recebe o estado inicial
       const checkbox = this.createElementSafely("input", {
         attributes: {
           type: "checkbox",
@@ -929,7 +963,7 @@ javascript: (() => {
 
     removeHighlightById(id) {
       document.querySelectorAll(`[id^="${id}-"]`).forEach((el) => {
-        el.removeEventListener('click', this.copyHighlightText);
+        el.removeEventListener("click", this.copyHighlightText);
         el.replaceWith(...el.childNodes);
       });
       this.highlights.delete(id);
@@ -959,9 +993,12 @@ javascript: (() => {
         // Reaplica o estilo original de visibilidade após a animação
         const highlightData = this.highlights.get(id);
         if (highlightData) {
-          this.applyStyles(firstPart, this.getHighlightStyle(highlightData.visible));
+          this.applyStyles(
+            firstPart,
+            this.getHighlightStyle(highlightData.visible)
+          );
         } else {
-           this.applyStyles(firstPart, ""); // Se por algum motivo o destaque sumiu, limpa o estilo
+          this.applyStyles(firstPart, ""); // Se por algum motivo o destaque sumiu, limpa o estilo
         }
       }, 1000);
     }
@@ -989,18 +1026,25 @@ javascript: (() => {
       }
 
       return highlightsArray.sort((a, b) => {
-        const textA = a.text.toLowerCase();
-        const textB = b.text.toLowerCase();
-        return this.sortOrder === "asc"
-          ? textA.localeCompare(textB)
-          : textB.localeCompare(textA);
+        if (this.sortOrder === "creation") {
+          return a.createdAt - b.createdAt; // Ordena por data de criação (mais antigo primeiro)
+        } else if (this.sortOrder === "asc") {
+          const textA = a.text.toLowerCase();
+          const textB = b.text.toLowerCase();
+          return textA.localeCompare(textB); // Ordenação alfabética A-Z
+        } else {
+          // this.sortOrder === "desc"
+          const textA = a.text.toLowerCase();
+          const textB = b.text.toLowerCase();
+          return textB.localeCompare(textA); // Ordenação alfabética Z-A
+        }
       });
     }
 
     clearHighlights() {
       this.highlights.forEach((_, id) => {
         document.querySelectorAll(`[id^="${id}-"]`).forEach((el) => {
-          el.removeEventListener('click', this.copyHighlightText);
+          el.removeEventListener("click", this.copyHighlightText);
           el.replaceWith(...el.childNodes);
         });
       });
@@ -1011,7 +1055,9 @@ javascript: (() => {
 
     // Este método agora é tratado por handleHideToggle e checkGlobalVisibilityState
     toggleHighlightsVisibility() {
-        console.warn("toggleHighlightsVisibility is deprecated. Use handleHideToggle.");
+      console.warn(
+        "toggleHighlightsVisibility is deprecated. Use handleHideToggle."
+      );
     }
 
     enableDrag() {
@@ -1505,7 +1551,8 @@ javascript: (() => {
           </div>
           <div class="content">
             <div class="toolbar">
-              <button id="hide-toggle">${ // Texto inicial será definido por checkGlobalVisibilityState
+              <button id="hide-toggle">${
+                // Texto inicial será definido por checkGlobalVisibilityState
                 this.hidden
                   ? this.strings.showHighlights
                   : this.strings.hideHighlights
@@ -1517,7 +1564,7 @@ javascript: (() => {
                 <input type="text" id="search-input" placeholder="Search highlights..." />
                 <button id="clear-search" class="clear-search-btn">×</button>
               </div>
-              <button id="sort-toggle" title="Sort A-Z/Z-A">A-Z ⇅</button>
+              <button id="sort-toggle" title="Sort by text (A-Z)">↓ Creation Order</button>
             </div>
             <p class="instructions">To highlight: "Ctrl+Click" on the selection.<br>To copy: "Click" on the highlight.</p>
             <ul class="highlight-list"></ul>
