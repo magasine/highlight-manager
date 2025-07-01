@@ -338,9 +338,9 @@
             <h3>4.4. Ocultar/Exibir Todos os Destaques</h3>
             <p>Você pode ocultar ou exibir todos os destaques na página de
                 uma vez. O status deste botão (<span class="code-snippet">Hide</span> ou <span class="code-snippet">Show</span>)
-                reflete a visibilidade geral dos destaques: ele exibirá "Hide" se todos os destaques estiverem
-                visíveis, e "Show" se pelo menos um destaque estiver oculto.
-            </p>
+                reflete a visibilidade geral dos destaques: ele exibirá "Hide" se *todos* os destaques estiverem
+                visíveis, e "Show" se *pelo menos um* destaque estiver oculto. Se você clicar neste botão, o estado de
+                visibilidade de *todos* os destaques e de suas caixas de seleção individuais será atualizado.</p>
             <ul>
                 <li><strong>Botão Ocultar/Exibir:</strong> <span class="code-snippet">Hide</span> (Ocultar) / <span
                         class="code-snippet">Show</span> (Exibir). Clique
@@ -351,7 +351,22 @@
                     global.</li>
             </ul>
 
-            <h3>4.5. Limpar Todos os Destaques</h3>
+            <h3>4.5. Mesclar Destaques Visíveis</h3>
+            <p>A nova funcionalidade de mesclagem permite combinar o texto de todos os destaques que estão atualmente
+                visíveis na página em um único bloco de texto, que é então copiado para a área de transferência.</p>
+            <ul>
+                <li><strong>Botão Mesclar (<span class="code-snippet">Merge</span>):</strong> Clique neste botão
+                    para iniciar o processo de mesclagem.</li>
+                <li><strong>Definição do Separador:</strong> Ao clicar em "Merge", uma caixa de diálogo solicitará
+                    que você insira um separador (por exemplo, "---" ou "**") que será usado entre os textos de cada
+                    destaque mesclado. Você pode usar o separador padrão ou inserir o seu próprio.</li>
+                <li><strong>Cópia Automática:</strong> Após a mesclagem, o texto combinado é automaticamente copiado
+                    para a sua área de transferência, e uma notificação confirmará a ação.</li>
+                <li><strong>Ordenação da Mesclagem:</strong> Os destaques são mesclados na ordem em que aparecem na
+                    página.</li>
+            </ul>
+
+            <h3>4.6. Limpar Todos os Destaques</h3>
             <p>Para remover todos os destaques de uma vez:</p>
             <ul>
                 <li><strong>Botão Limpar:</strong> <span class="code-snippet">Clear</span>. Ao clicar, uma
