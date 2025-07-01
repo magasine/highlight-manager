@@ -14,6 +14,7 @@ javascript: (() => {
       this.copyHighlightText = this.copyHighlightText.bind(this); // Novo binding para copiar texto
       this.checkGlobalVisibilityState =
         this.checkGlobalVisibilityState.bind(this); // NOVO BINDING
+      this.handleMergeHighlights = this.handleMergeHighlights.bind(this); // NOVO BINDING para merge
 
       // Trusted Types policy creation
       this.trustedTypesPolicy = this.createTrustedTypesPolicy();
@@ -67,6 +68,10 @@ javascript: (() => {
         showHighlights: "Show",
         selectionTooLong: `Seleção muito longa (máximo ${this.maxSelectionLength} caracteres)`,
         copiedToClipboard: "Copiado para a área de transferência!", // Nova string
+        mergePrompt: "Qual separador você gostaria de usar?", // Nova string
+        defaultSeparator: "---", // Nova string
+        noVisibleHighlights: "Nenhum destaque visível para mesclar.", // Nova string
+        mergeSuccess: "Destaques mesclados e copiados!", // Nova string
       };
 
       // Styles e popupHTML serão definidos e atualizados dinamicamente
@@ -126,7 +131,14 @@ javascript: (() => {
       this.removeThemeListeners(); // Novo: Remover listeners de tema
       // Remover event listeners dos destaques existentes para evitar vazamento de memória
       document.querySelectorAll(".highlight").forEach((el) => {
-        el.removeEventListener("click", this.copyHighlightText);
+        el.removeEventListener("click", (e) => {
+          e.stopPropagation();
+          const highlightId = el.id.split('-')[0]; // Pega o ID original do destaque
+          const highlightData = this.highlights.get(highlightId);
+          if (highlightData) {
+            this.copyHighlightText(highlightData.text);
+          }
+        });
       });
     }
 
@@ -542,6 +554,60 @@ javascript: (() => {
       }
     }
 
+    /* ========== MERGE HIGHLIGHTS FUNCTIONALITY ========== */
+    async handleMergeHighlights() {
+      const visibleHighlights = Array.from(this.highlights.values()).filter(
+        (h) => h.visible
+      );
+
+      if (visibleHighlights.length === 0) {
+        this.showFeedback(this.strings.noVisibleHighlights, "warning");
+        return;
+      }
+
+      // Sort highlights by their appearance order in the DOM
+      visibleHighlights.sort((a, b) => {
+        const elA = document.getElementById(`${a.id}-0`);
+        const elB = document.getElementById(`${b.id}-0`);
+
+        if (!elA || !elB) {
+          // Fallback to creation date if elements not found in DOM
+          return a.createdAt - b.createdAt;
+        }
+
+        // Compare positions using compareDocumentPosition
+        const position = elA.compareDocumentPosition(elB);
+        if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
+          return -1; // A comes before B
+        } else if (position & Node.DOCUMENT_POSITION_PRECEDING) {
+          return 1; // B comes before A
+        }
+        return 0; // Same position or not comparable
+      });
+
+      const separator = prompt(
+        this.strings.mergePrompt,
+        this.strings.defaultSeparator
+      );
+
+      if (separator === null) {
+        // User cancelled the prompt
+        return;
+      }
+
+      const mergedText = visibleHighlights
+        .map((h) => h.text)
+        .join(`\n${separator}\n`);
+
+      try {
+        await navigator.clipboard.writeText(mergedText);
+        this.showFeedback(this.strings.mergeSuccess, "success");
+      } catch (err) {
+        console.error("Failed to copy merged text: ", err);
+        this.showFeedback("Falha ao copiar o texto mesclado.", "error");
+      }
+    }
+
     /* ========== STORAGE MANAGEMENT ========== */
     saveToStorage() {
       const data = Array.from(this.highlights.values());
@@ -703,6 +769,9 @@ javascript: (() => {
       elements.hideToggleBtn.addEventListener("click", () =>
         this.handleHideToggle()
       );
+      elements.mergeBtn.addEventListener("click", () =>
+        this.handleMergeHighlights()
+      ); // NOVO: Event listener para o botão Merge
       elements.closeBtn.addEventListener("click", (e) =>
         this.handleCloseClick(e)
       );
@@ -729,6 +798,7 @@ javascript: (() => {
       return {
         clearBtn: this.shadowRoot.getElementById("clear"),
         hideToggleBtn: this.shadowRoot.getElementById("hide-toggle"),
+        mergeBtn: this.shadowRoot.getElementById("merge-highlights"), // NOVO: Pega o botão Merge
         closeBtn: this.shadowRoot.getElementById("btn-close"),
         minimizeBtn: this.shadowRoot.getElementById("btn-minimize"),
         searchInput: this.shadowRoot.getElementById("search-input"),
@@ -873,24 +943,34 @@ javascript: (() => {
         return;
       }
 
-      let allVisible = true;
+      let anyVisible = false;
       let anyHidden = false;
 
       this.highlights.forEach((highlightData) => {
         if (!highlightData.visible) {
           anyHidden = true;
         } else {
-          // Apenas para ter certeza, se um destaque está visível, então nem todos estão escondidos
-          // (embora allVisible = false já trataria isso)
+          anyVisible = true;
         }
       });
 
-      // Se qualquer destaque estiver escondido, o botão global deve ser "Show"
-      if (anyHidden) {
-        this.hidden = true; // O estado global reflete que há algo para "Mostrar"
-      } else {
-        // Se NENHUM estiver escondido (todos estão visíveis), o botão global deve ser "Hide"
+      // Se todos estiverem escondidos (e houver destaques), o botão global deve ser "Show"
+      if (!anyVisible && anyHidden) { // This means all existing highlights are currently hidden
+        this.hidden = true; 
+      } else if (anyVisible && !anyHidden) { // All existing highlights are visible
         this.hidden = false;
+      } else if (anyVisible && anyHidden) { // Some visible, some hidden
+        // This case is tricky for the global button. 
+        // We'll set 'hidden' based on the last state applied by 'handleHideToggle'
+        // or by default, if some are hidden, the global 'Hide' button should conceptually imply 'show all'.
+        // Let's re-evaluate the intended behavior of the global button.
+        // If 'hidden' means "all highlights are currently hidden by the global toggle",
+        // then if even one is visible, the global toggle state should reflect "hide all".
+        // Let's stick to: if ANY highlight is hidden, the global button should say "Show".
+        // If ALL highlights are visible, the global button should say "Hide".
+        this.hidden = anyHidden; // If any are hidden, the global toggle should prompt to "Show"
+      } else { // No highlights at all
+         this.hidden = false;
       }
       this.updateHideButton();
     }
@@ -1358,6 +1438,7 @@ javascript: (() => {
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
+            gap: 5px; /* Adicionado para espaçamento entre os botões */
           }
           .toolbar button {
             font-size: 0.75rem;
@@ -1367,6 +1448,7 @@ javascript: (() => {
             color: ${isDark ? "#e0e0e0" : "black"};
             border-radius: 5px;
             cursor: pointer;
+            flex-grow: 1; /* Permite que os botões cresçam e preencham o espaço */
           }
           .toolbar button:hover {
             background: ${isDark ? "#555" : "#f0f0f0"};
@@ -1557,6 +1639,7 @@ javascript: (() => {
                   ? this.strings.showHighlights
                   : this.strings.hideHighlights
               }</button>
+              <button id="merge-highlights" title="Mesclar destaques visíveis">Merge</button>
               <button id="clear">Clear</button>
             </div>
             <div class="search-sort-container">
@@ -1570,7 +1653,7 @@ javascript: (() => {
             <ul class="highlight-list"></ul>
           </div>
           <div class="highlight-manager-footer">
-            <span>v20250624</span>
+            <span>v20250701</span>
             |
             <a href="https://linktr.ee/magasine" target="_blank">by @magasine</a>
             |
