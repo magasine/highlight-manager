@@ -1,5 +1,9 @@
 javascript: (() => {
   class HighlightManager {
+    isUIVisible() {
+      return !!this.shadowHost && this.shadowHost.isConnected;
+    }
+
     constructor() {
       if (window.highlightManagerInstance) {
         window.highlightManagerInstance.destroy();
@@ -7,6 +11,7 @@ javascript: (() => {
       window.highlightManagerInstance = this;
 
       // Permanent method binding
+      this.handleKeyDown = this.handleKeyDown.bind(this);
       this.handleMouseUp = this.handleMouseUp.bind(this);
       this.handleBeforeUnload = this.handleBeforeUnload.bind(this);
       this.destroy = this.destroy.bind(this);
@@ -82,6 +87,7 @@ javascript: (() => {
     setupEventListeners() {
       document.addEventListener("mouseup", this.handleMouseUp);
       window.addEventListener("beforeunload", this.handleBeforeUnload);
+      document.addEventListener("keydown", this.handleKeyDown);
 
       // SPA handling
       if (window.history.pushState) {
@@ -98,6 +104,21 @@ javascript: (() => {
     }
 
     /* ========== CORE HIGHLIGHTING FUNCTIONALITY ========== */
+
+    handleKeyDown(e) {
+      // Verifica se a tecla pressionada é "h" ou "H" e se há uma seleção
+      if (
+        (e.key === "h" || e.key === "H") &&
+        window.getSelection().toString().trim().length > 0
+      ) {
+        e.preventDefault(); // Previne o comportamento padrão da tecla
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        this.highlightSelection(range, this.generateUniqueId());
+        selection.removeAllRanges();
+      }
+    }
+
     handleMouseUp(e) {
       if (e.ctrlKey) {
         const selection = window.getSelection();
@@ -133,7 +154,7 @@ javascript: (() => {
       document.querySelectorAll(".highlight").forEach((el) => {
         el.removeEventListener("click", (e) => {
           e.stopPropagation();
-          const highlightId = el.id.split('-')[0]; // Pega o ID original do destaque
+          const highlightId = el.id.split("-")[0]; // Pega o ID original do destaque
           const highlightData = this.highlights.get(highlightId);
           if (highlightData) {
             this.copyHighlightText(highlightData.text);
@@ -145,6 +166,7 @@ javascript: (() => {
     removeEventListeners() {
       document.removeEventListener("mouseup", this.handleMouseUp);
       window.removeEventListener("beforeunload", this.handleBeforeUnload);
+      document.removeEventListener("keydown", this.handleKeyDown);
     }
 
     clearPendingRestorations() {
@@ -851,7 +873,6 @@ javascript: (() => {
 
       setTimeout(() => {
         this.destroy();
-        this.showFeedback("Gerenciador de destaques fechado", "info");
       }, 200);
     }
 
@@ -955,12 +976,15 @@ javascript: (() => {
       });
 
       // Se todos estiverem escondidos (e houver destaques), o botão global deve ser "Show"
-      if (!anyVisible && anyHidden) { // This means all existing highlights are currently hidden
-        this.hidden = true; 
-      } else if (anyVisible && !anyHidden) { // All existing highlights are visible
+      if (!anyVisible && anyHidden) {
+        // This means all existing highlights are currently hidden
+        this.hidden = true;
+      } else if (anyVisible && !anyHidden) {
+        // All existing highlights are visible
         this.hidden = false;
-      } else if (anyVisible && anyHidden) { // Some visible, some hidden
-        // This case is tricky for the global button. 
+      } else if (anyVisible && anyHidden) {
+        // Some visible, some hidden
+        // This case is tricky for the global button.
         // We'll set 'hidden' based on the last state applied by 'handleHideToggle'
         // or by default, if some are hidden, the global 'Hide' button should conceptually imply 'show all'.
         // Let's re-evaluate the intended behavior of the global button.
@@ -969,8 +993,9 @@ javascript: (() => {
         // Let's stick to: if ANY highlight is hidden, the global button should say "Show".
         // If ALL highlights are visible, the global button should say "Hide".
         this.hidden = anyHidden; // If any are hidden, the global toggle should prompt to "Show"
-      } else { // No highlights at all
-         this.hidden = false;
+      } else {
+        // No highlights at all
+        this.hidden = false;
       }
       this.updateHideButton();
     }
@@ -1649,11 +1674,11 @@ javascript: (() => {
               </div>
               <button id="sort-toggle" title="Sort by text (A-Z)">↓ Creation Order</button>
             </div>
-            <p class="instructions">To highlight: "Ctrl+Click" on the selection.<br>To copy: "Click" on the highlight.</p>
+            <p class="instructions">To highlight: Press "H" on selection or "Ctrl+Click".<br>To copy: "Click" on the highlight.</p>
             <ul class="highlight-list"></ul>
           </div>
           <div class="highlight-manager-footer">
-            <span>v20250701</span>
+            <span>v20250816</span>
             |
             <a href="https://linktr.ee/magasine" target="_blank">by @magasine</a>
             |
@@ -1675,5 +1700,12 @@ javascript: (() => {
     }
   }
 
-  const manager = new HighlightManager();
+  if (
+    window.highlightManagerInstance &&
+    window.highlightManagerInstance.isUIVisible()
+  ) {
+    window.highlightManagerInstance.destroy();
+  } else {
+    new HighlightManager();
+  }
 })();
